@@ -1,0 +1,9 @@
+[package]
+name = "moq-log"
+authors = ["Danny Grispen"]
+version = "0.1.0"
+edition = "2021"
+description = "Media over QUIC - Logging based on qlog"
+repository = "https://github.com/DannyG-1952723/moq-rs"
+
+[dependencies]
