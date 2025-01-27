@@ -7,3 +7,4 @@ description = "Media over QUIC - Logging based on qlog"
 repository = "https://github.com/DannyG-1952723/moq-rs"
 
 [dependencies]
+chrono = "0.4.39"
