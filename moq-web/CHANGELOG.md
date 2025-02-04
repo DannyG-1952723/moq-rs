@@ -5,7 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.4.3](https://github.com/kixelated/moq-rs/compare/moq-web-v0.4.2...moq-web-v0.4.3) - 2025-01-30
+
+### Other
+
+- Misc stuff. ([#325](https://github.com/kixelated/moq-rs/pull/325))
+
+## [0.4.0]
+
+Major release.
+
+## [0.3.15](https://github.com/kixelated/moq-rs/compare/moq-web-v0.3.14...moq-web-v0.3.15) - 2025-01-30
+
+### Other
+
+- Move package.json back so linking works. ([#318](https://github.com/kixelated/moq-rs/pull/318))
+- Misc fixes and changes. ([#317](https://github.com/kixelated/moq-rs/pull/317))
+- Plane UI work ([#316](https://github.com/kixelated/moq-rs/pull/316))
+
+## [0.3.14](https://github.com/kixelated/moq-rs/compare/moq-web-v0.3.13...moq-web-v0.3.14) - 2025-01-24
+
+### Other
+
+- Switch from ./dev scripts to Just ([#311](https://github.com/kixelated/moq-rs/pull/311))
+- Oops flex wasn't the answer. ([#312](https://github.com/kixelated/moq-rs/pull/312))
+- Meet status and various fixes ([#310](https://github.com/kixelated/moq-rs/pull/310))
+- Simple pause+fullscreen controls. ([#309](https://github.com/kixelated/moq-rs/pull/309))
+- Do some cooler decorator stuff. ([#308](https://github.com/kixelated/moq-rs/pull/308))
+- Implement initial <moq-room> support ([#307](https://github.com/kixelated/moq-rs/pull/307))
+- Add initial <moq-meet> element ([#302](https://github.com/kixelated/moq-rs/pull/302))
+- Switch to webpack ([#301](https://github.com/kixelated/moq-rs/pull/301))
 
 ## [0.3.13](https://github.com/kixelated/moq-rs/compare/moq-web-v0.3.12...moq-web-v0.3.13) - 2025-01-16
 

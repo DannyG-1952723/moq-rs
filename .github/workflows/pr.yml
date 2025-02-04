@@ -1,4 +1,4 @@
-name: PR Checks
+name: PR
 
 on:
   pull_request:
@@ -8,61 +8,30 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  native:
-    name: Native Checks
+  check:
+    name: Check
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
+
+      # Install Just to run CI scripts
+      - uses: extractions/setup-just@v2
 
       # Install Rust with clippy/rustfmt
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           components: clippy, rustfmt
 
-      # Annoying: we need gstreamer installed to compile moq-gst
-      - name: Setup GStreamer
-        run: |
-          sudo apt-get update
-          sudo apt-get remove libunwind-*
-          sudo apt-get install -y \
-            libgstreamer1.0-dev \
-            libgstreamer-plugins-base1.0-dev \
-            libgstreamer-plugins-bad1.0-dev \
-            gstreamer1.0-plugins-base \
-            gstreamer1.0-plugins-good \
-            gstreamer1.0-plugins-bad \
-            gstreamer1.0-plugins-ugly \
-            gstreamer1.0-libav \
-            gstreamer1.0-tools \
-            gstreamer1.0-x \
-            gstreamer1.0-alsa \
-            gstreamer1.0-gl \
-            gstreamer1.0-gtk3 \
-            gstreamer1.0-qt5 \
-            gstreamer1.0-pulseaudio
+      # Install Shear to find unused dependencies
+      - uses: cargo-bins/cargo-binstall@main
+      - run: cargo binstall --no-confirm --force cargo-shear
+
+      # Install Node for moq-web
+      - uses: actions/setup-node@v4
 
       # Required for unstable WebCodecs and WebTransport
       - run: echo "RUSTFLAGS=--cfg=web_sys_unstable_apis" >> $GITHUB_ENV
 
       # Make sure u guys don't write bad code
-      - run: cargo check --all --verbose
-      - run: cargo test --all --verbose
-      - run: cargo clippy --all --no-deps -- -D warnings
-      - run: cargo fmt --all --check
-
-      # Check for unused dependencies
-      - uses: bnjbvr/cargo-machete@main
-
-  # Make sure the NPM package is good to go
-  npm:
-    name: Javascript Checks
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-      - run: npm install
-      - run: npm run build
-      - run: npm pack
+      - run: just check
