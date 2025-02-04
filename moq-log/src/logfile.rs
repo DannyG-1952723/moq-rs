@@ -2,6 +2,8 @@ use std::collections::HashMap;
 
 use chrono::{DateTime, FixedOffset};
 
+// TODO: Maybe implement the Default trait for (almost) all structs
+
 pub struct QlogFileSeq {
 	log_file_details: LogFile,
 	trace: TraceSeq
@@ -88,6 +90,7 @@ struct ReferenceTime {
 
 impl ReferenceTime {
 	/// clock_type defaults to System when None
+	///
 	/// epoch defaults to "1970-01-01T00:00:00.000Z" when None
 	fn new(clock_type: Option<ClockType>, epoch: Option<Epoch>, wall_clock_time: Option<DateTime<FixedOffset>>) -> ReferenceTime {
 		let clock_type = clock_type.unwrap_or(ClockType::System);
