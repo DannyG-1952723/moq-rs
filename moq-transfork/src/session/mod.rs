@@ -1,6 +1,7 @@
 use crate::{message, AnnouncedConsumer, Error, Path, RouterConsumer, Track, TrackConsumer};
 
 use moq_async::{spawn, Close, OrClose};
+use moq_log::writer::QlogWriter;
 
 mod publisher;
 mod reader;
@@ -157,6 +158,10 @@ impl Session {
 
 	/// Publish a track, automatically announcing and serving it.
 	pub fn publish(&mut self, track: TrackConsumer) -> Result<(), Error> {
+		// TODO: Update and probably call somewhere else (this is a test log)
+		let log_msg = String::from("Publishing a new track");
+		QlogWriter::log(&log_msg);
+
 		self.publisher.publish(track)
 	}
 
@@ -174,6 +179,10 @@ impl Session {
 
 	/// Subscribe to a track and start receiving data over the network.
 	pub fn subscribe(&self, track: Track) -> TrackConsumer {
+		// TODO: Update and probably call somewhere else (this is a test log)
+		let log_msg = String::from("Subscribing to a track");
+		QlogWriter::log(&log_msg);
+
 		self.subscriber.subscribe(track)
 	}
 

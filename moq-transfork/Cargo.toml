@@ -29,3 +29,4 @@ futures = "0.3"
 num_enum = "0.7"
 
 moq-async = { path = "../moq-async", version = "0.1" }
+moq-log = { path = "../moq-log", version = "0.1" }

@@ -81,11 +81,11 @@ web:
 
 # Publish the clock broadcast
 clock-pub:
-	cargo run --bin moq-clock -- "http://localhost:4443" publish
+	QLOGFILE="../logs/qlog_clock_pub.sqlog" cargo run --bin moq-clock -- "http://localhost:4443" publish
 
 # Subscribe to the clock broadcast
 clock-sub:
-	cargo run --bin moq-clock -- "http://localhost:4443" subscribe
+	QLOGFILE="../logs/qlog_clock_sub.sqlog" cargo run --bin moq-clock -- "http://localhost:4443" subscribe
 
 # Run the CI checks
 check:
