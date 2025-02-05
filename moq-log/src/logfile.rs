@@ -1,8 +1,12 @@
 use std::collections::HashMap;
 
 use chrono::{DateTime, FixedOffset};
+use serde::Serialize;
+use serde_with::skip_serializing_none;
 
+#[derive(Serialize)]
 pub struct QlogFileSeq {
+	#[serde(flatten)]
 	log_file_details: LogFile,
 	trace: TraceSeq
 }
@@ -13,6 +17,8 @@ impl QlogFileSeq {
 	}
 }
 
+#[skip_serializing_none]
+#[derive(Serialize)]
 pub struct LogFile {
 	/// Identifies the concrete log file schema
 	file_schema: String,
@@ -40,6 +46,8 @@ impl LogFile {
 	}
 }
 
+#[skip_serializing_none]
+#[derive(Serialize)]
 pub struct TraceSeq {
 	title: Option<String>,
 	description: Option<String>,
@@ -53,12 +61,15 @@ impl TraceSeq {
 	}
 }
 
+#[skip_serializing_none]
+#[derive(Serialize)]
 pub struct CommonFields {
 	path: Option<PathId>,
 	time_format: Option<TimeFormat>,
 	reference_time: Option<ReferenceTime>,
 	protocol_types: Option<Vec<String>>,
 	group_id: Option<GroupId>,
+	#[serde(flatten)]						// Adds the custom fields directly to CommonFields when serializing
 	custom_fields: HashMap<String, String>
 }
 
@@ -86,7 +97,8 @@ impl Default for CommonFields {
 type PathId = String;
 type GroupId = String;
 
-#[derive(Default)]
+#[derive(Default, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum TimeFormat {
 	/// Relative to the ReferenceTime 'epoch' field
 	#[default]
@@ -95,6 +107,8 @@ pub enum TimeFormat {
 	RelativeToPreviousEvent
 }
 
+#[skip_serializing_none]
+#[derive(Serialize)]
 pub struct ReferenceTime {
 	clock_type: ClockType,
 	epoch: Epoch,
@@ -123,7 +137,8 @@ impl Default for ReferenceTime {
 	}
 }
 
-#[derive(Default, PartialEq, Eq)]
+#[derive(Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum ClockType {
 	#[default]
 	System,
@@ -131,7 +146,8 @@ pub enum ClockType {
 	Other(String)
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case", untagged)]
 pub enum Epoch {
 	Rfc3339DateTime(DateTime<FixedOffset>),
 	Unknown
@@ -144,8 +160,12 @@ impl Default for Epoch {
 }
 
 /// Vantage point from which a trace originates
+#[skip_serializing_none]
+#[derive(Serialize)]
 pub struct VantagePoint {
 	name: Option<String>,
+	// 'type' is a keyword in Rust
+	#[serde(rename = "type")]
 	vp_type: VantagePointType,
 	/// The direction of the data flow (e.g., Client: "packet sent" event goes in direction of the server, Server: "packet sent" event goes in direction of the client)
 	flow: Option<VantagePointType>
@@ -163,7 +183,8 @@ impl VantagePoint {
 	}
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum VantagePointType {
 	/// Initiates the connection
 	Client,

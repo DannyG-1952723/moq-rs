@@ -1281,6 +1281,7 @@ dependencies = [
  "anyhow",
  "chrono",
  "clap",
+ "moq-log",
  "moq-native",
  "moq-transfork",
  "tokio",
@@ -1319,6 +1320,9 @@ name = "moq-log"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "serde",
+ "serde_json",
+ "serde_with",
 ]
 
 [[package]]
