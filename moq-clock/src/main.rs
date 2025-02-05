@@ -1,3 +1,4 @@
+use moq_log::{writer::QlogWriter, logfile::{VantagePoint, VantagePointType}};
 use moq_native::quic;
 use std::net;
 use url::Url;
@@ -45,6 +46,23 @@ pub enum Command {
 async fn main() -> anyhow::Result<()> {
 	let config = Config::parse();
 	config.log.init();
+
+	match config.role {
+		Command::Publish => QlogWriter::log_file_details(
+			Some("MoQ Clock Logs".to_string()),
+			None,
+			Some("Publisher".to_string()),
+			Some("Logs taken from the perspective of the publisher".to_string()),
+			Some(VantagePoint::new(Some("clock-pub".to_string()), VantagePointType::Server, None))
+		),
+		Command::Subscribe => QlogWriter::log_file_details(
+			Some("MoQ Clock Logs".to_string()),
+			None,
+			Some("Subscriber".to_string()),
+			Some("Logs taken from the perspective of the subscriber".to_string()),
+			Some(VantagePoint::new(Some("clock-sub".to_string()), VantagePointType::Client, None))
+		)
+	}
 
 	let tls = config.tls.load()?;
 
