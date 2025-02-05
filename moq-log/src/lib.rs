@@ -1,3 +1,2 @@
 pub mod writer;
-
-mod logfile;
+pub mod logfile;

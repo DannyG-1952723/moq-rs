@@ -2,20 +2,18 @@ use std::collections::HashMap;
 
 use chrono::{DateTime, FixedOffset};
 
-// TODO: Maybe implement the Default trait for (almost) all structs
-
 pub struct QlogFileSeq {
 	log_file_details: LogFile,
 	trace: TraceSeq
 }
 
 impl QlogFileSeq {
-	fn new(log_file_details: LogFile, trace: TraceSeq) -> QlogFileSeq {
+	pub fn new(log_file_details: LogFile, trace: TraceSeq) -> QlogFileSeq {
 		QlogFileSeq { log_file_details, trace }
 	}
 }
 
-struct LogFile {
+pub struct LogFile {
 	/// Identifies the concrete log file schema
 	file_schema: String,
 	/// Indicates the serialization format using a media type
@@ -42,7 +40,7 @@ impl LogFile {
 	}
 }
 
-struct TraceSeq {
+pub struct TraceSeq {
 	title: Option<String>,
 	description: Option<String>,
 	common_fields: Option<CommonFields>,
@@ -50,12 +48,12 @@ struct TraceSeq {
 }
 
 impl TraceSeq {
-	fn new(title: Option<String>, description: Option<String>, common_fields: Option<CommonFields>, vantage_point: Option<VantagePoint>) -> TraceSeq {
+	pub fn new(title: Option<String>, description: Option<String>, common_fields: Option<CommonFields>, vantage_point: Option<VantagePoint>) -> TraceSeq {
 		TraceSeq { title, description, common_fields, vantage_point }
 	}
 }
 
-struct CommonFields {
+pub struct CommonFields {
 	path: Option<PathId>,
 	time_format: Option<TimeFormat>,
 	reference_time: Option<ReferenceTime>,
@@ -65,24 +63,39 @@ struct CommonFields {
 }
 
 impl CommonFields {
-	fn new(path: Option<PathId>, time_format: Option<TimeFormat>, reference_time: Option<ReferenceTime>, protocol_types: Option<Vec<String>>, group_id: Option<GroupId>, custom_fields: Option<HashMap<String, String>>) -> CommonFields {
+	pub fn new(path: Option<PathId>, time_format: Option<TimeFormat>, reference_time: Option<ReferenceTime>, protocol_types: Option<Vec<String>>, group_id: Option<GroupId>, custom_fields: Option<HashMap<String, String>>) -> CommonFields {
 		let custom_fields = custom_fields.unwrap_or(HashMap::new());
 
 		CommonFields { path, time_format, reference_time, protocol_types, group_id, custom_fields }
 	}
 }
 
+impl Default for CommonFields {
+	fn default() -> Self {
+		Self {
+			path: Some("".to_string()),
+			time_format: Some(TimeFormat::default()),
+			reference_time: Some(ReferenceTime::default()),
+			protocol_types: Some(vec!["MoQ".to_string()]),
+			group_id: None,
+			custom_fields: HashMap::new()
+		}
+	}
+}
+
 type PathId = String;
 type GroupId = String;
 
-enum TimeFormat {
+#[derive(Default)]
+pub enum TimeFormat {
 	/// Relative to the ReferenceTime 'epoch' field
+	#[default]
 	RelativeToEpoch,
 	/// Delta-encoded value, based on the previously logged value
 	RelativeToPreviousEvent
 }
 
-struct ReferenceTime {
+pub struct ReferenceTime {
 	clock_type: ClockType,
 	epoch: Epoch,
 	wall_clock_time: Option<DateTime<FixedOffset>>
@@ -92,9 +105,9 @@ impl ReferenceTime {
 	/// clock_type defaults to System when None
 	///
 	/// epoch defaults to "1970-01-01T00:00:00.000Z" when None
-	fn new(clock_type: Option<ClockType>, epoch: Option<Epoch>, wall_clock_time: Option<DateTime<FixedOffset>>) -> ReferenceTime {
-		let clock_type = clock_type.unwrap_or(ClockType::System);
-		let epoch = epoch.unwrap_or(Epoch::Rfc3339DateTime(DateTime::parse_from_rfc3339("1970-01-01T00:00:00.000Z").unwrap()));
+	pub fn new(clock_type: Option<ClockType>, epoch: Option<Epoch>, wall_clock_time: Option<DateTime<FixedOffset>>) -> ReferenceTime {
+		let clock_type = clock_type.unwrap_or(ClockType::default());
+		let epoch = epoch.unwrap_or(Epoch::default());
 
 		if clock_type == ClockType::Monotonic && epoch != Epoch::Unknown {
 			panic!("When using the 'monotonic' clock type, the epoch field must have the value 'unknown'");
@@ -104,21 +117,34 @@ impl ReferenceTime {
 	}
 }
 
-#[derive(PartialEq, Eq)]
-enum ClockType {
+impl Default for ReferenceTime {
+	fn default() -> Self {
+		Self { clock_type: ClockType::default(), epoch: Epoch::default(), wall_clock_time: None }
+	}
+}
+
+#[derive(Default, PartialEq, Eq)]
+pub enum ClockType {
+	#[default]
 	System,
 	Monotonic,
 	Other(String)
 }
 
 #[derive(PartialEq, Eq)]
-enum Epoch {
+pub enum Epoch {
 	Rfc3339DateTime(DateTime<FixedOffset>),
 	Unknown
 }
 
+impl Default for Epoch {
+	fn default() -> Self {
+		Self::Rfc3339DateTime(DateTime::parse_from_rfc3339("1970-01-01T00:00:00.000Z").unwrap())
+	}
+}
+
 /// Vantage point from which a trace originates
-struct VantagePoint {
+pub struct VantagePoint {
 	name: Option<String>,
 	vp_type: VantagePointType,
 	/// The direction of the data flow (e.g., Client: "packet sent" event goes in direction of the server, Server: "packet sent" event goes in direction of the client)
@@ -126,7 +152,7 @@ struct VantagePoint {
 }
 
 impl VantagePoint {
-	fn new(name: Option<String>, vp_type: VantagePointType, flow: Option<VantagePointType>) -> VantagePoint {
+	pub fn new(name: Option<String>, vp_type: VantagePointType, flow: Option<VantagePointType>) -> VantagePoint {
 		if vp_type == VantagePointType::Network {
 			if let None = flow {
 				panic!("The 'flow' field is required if the type is 'network'");
@@ -138,7 +164,7 @@ impl VantagePoint {
 }
 
 #[derive(PartialEq, Eq)]
-enum VantagePointType {
+pub enum VantagePointType {
 	/// Initiates the connection
 	Client,
 	/// Accepts the connection
