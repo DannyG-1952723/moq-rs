@@ -160,7 +160,7 @@ impl Session {
 	pub fn publish(&mut self, track: TrackConsumer) -> Result<(), Error> {
 		// TODO: Update and probably call somewhere else (this is a test log)
 		let log_msg = String::from("Publishing a new track");
-		QlogWriter::log(&log_msg);
+		QlogWriter::log_event(&log_msg);
 
 		self.publisher.publish(track)
 	}
@@ -181,7 +181,7 @@ impl Session {
 	pub fn subscribe(&self, track: Track) -> TrackConsumer {
 		// TODO: Update and probably call somewhere else (this is a test log)
 		let log_msg = String::from("Subscribing to a track");
-		QlogWriter::log(&log_msg);
+		QlogWriter::log_event(&log_msg);
 
 		self.subscriber.subscribe(track)
 	}

@@ -1,5 +1,7 @@
 use std::{env, fs::File, io::{BufWriter, Write}, sync::{LazyLock, Mutex}};
 
+use serde::Serialize;
+
 use crate::logfile::{CommonFields, LogFile, QlogFileSeq, TraceSeq, VantagePoint};
 
 // Static variable so that a logger variable doesn't need to be passed to every function wherein logging occurs
@@ -11,6 +13,9 @@ pub struct QlogWriter {
 }
 
 impl QlogWriter {
+	const RECORD_SEPARATOR: &[u8] = &[0x1E];
+	const LINE_FEED: &[u8] = &[0x0A];
+
 	fn init() -> Self {
 		match env::var("QLOGFILE") {
 			Ok(qlog_file_path) => {
@@ -33,18 +38,14 @@ impl QlogWriter {
 
 			let qlog_file_seq = QlogFileSeq::new(log_file_details, trace);
 
-			// TODO: Write to file correctly (record separators, newlines...)
-			let json_representation = serde_json::to_string_pretty(&qlog_file_seq).unwrap();
-			writer.write(json_representation.as_bytes()).unwrap();
-			writer.flush().unwrap();
+			QlogWriter::log(writer, &qlog_file_seq);
 
 			qlog_writer.file_details_written = true;
 		}
 	}
 
 	// TODO: Update (current implementation is to test if writing works)
-	// Flushes write buffer after every log, otherwise won't write to file when exiting the program using ^C
-	pub fn log(text: &String) {
+	pub fn log_event(text: &String) {
 		let mut qlog_writer = QLOG_WRITER.lock().unwrap();
 
 		if !qlog_writer.file_details_written {
@@ -55,5 +56,17 @@ impl QlogWriter {
 			writer.write(text.as_bytes()).unwrap();
 			writer.flush().unwrap();
 		}
+	}
+
+	// TODO: Maybe add more error handling
+	// Flushes write buffer after every log, otherwise won't write to file when exiting the program using ^C
+	fn log(writer: &mut BufWriter<File>, data: &impl Serialize) {
+		let json = serde_json::to_string_pretty(data).unwrap();
+
+		writer.write_all(QlogWriter::RECORD_SEPARATOR).unwrap();
+		writer.write_all(json.as_bytes()).unwrap();
+		writer.write_all(QlogWriter::LINE_FEED).unwrap();
+
+		writer.flush().unwrap();
 	}
 }
