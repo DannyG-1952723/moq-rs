@@ -61,9 +61,17 @@ impl TraceSeq {
 	}
 }
 
+fn is_empty_or_none(path: &Option<PathId>) -> bool {
+    match path {
+        Some(p) => p.is_empty(),
+        None => true,
+    }
+}
+
 #[skip_serializing_none]
 #[derive(Serialize)]
 pub struct CommonFields {
+	#[serde(skip_serializing_if = "is_empty_or_none")]
 	path: Option<PathId>,
 	time_format: Option<TimeFormat>,
 	reference_time: Option<ReferenceTime>,
