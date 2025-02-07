@@ -41,7 +41,7 @@ impl LogFile {
 			description,
 			// TODO: Maybe add QUIC events to this
 			// TODO: Change MoQ event space (this is a placeholder)
-			event_schemas: vec!["urn:ietf:params:qlog:events:moq".to_string()]
+			event_schemas: vec!["urn:ietf:params:qlog:events:moq-transfork-03".to_string()]
 		}
 	}
 }
