@@ -102,8 +102,8 @@ impl Default for CommonFields {
 	}
 }
 
-type PathId = String;
-type GroupId = String;
+pub type PathId = String;
+pub type GroupId = String;
 
 #[derive(Default, Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -201,87 +201,4 @@ pub enum VantagePointType {
 	/// Observer in between client and server
 	Network,
 	Unknown
-}
-
-struct Event {
-	time: f64,
-	name: String,
-	data: ProtocolEventData,
-	path: Option<PathId>,
-	time_format: Option<TimeFormat>,
-	protocol_types: Option<Vec<String>>,
-	group_id: Option<GroupId>,
-	system_info: Option<SystemInformation>,
-	custom_fields: HashMap<String, String>
-}
-
-struct SystemInformation {
-	processor_id: Option<u32>,
-	process_id: Option<u32>,
-	thread_id: Option<u32>
-}
-
-impl SystemInformation {
-	fn new(processor_id: Option<u32>, process_id: Option<u32>, thread_id: Option<u32>) -> SystemInformation {
-		SystemInformation { processor_id, process_id, thread_id }
-	}
-}
-
-enum ProtocolEventData {
-	LogLevelEventData(LogLevelEventData)
-}
-
-enum LogLevelEventData {
-	LogLevelError(LogLevelError),
-	LogLevelWarning(LogLevelWarning),
-	LogLevelInfo(LogLevelInfo),
-	LogLevelDebug(LogLevelDebug),
-	LogLevelVerbose(LogLevelVerbose)
-}
-
-// TODO: Look at what to do with the extension (see RFC draft)
-/// Used to log details of an internal error that might not get reflected on the wire
-struct LogLevelError {
-	code: Option<u64>,
-	message: Option<String>
-}
-
-// TODO: Look at what to do with the extension (see RFC draft)
-/// Used to log details of an internal warning that might not get reflected on the wire
-struct LogLevelWarning {
-	code: Option<u64>,
-	message: Option<String>
-}
-
-// TODO: Look at what to do with the extension (see RFC draft)
-/// Used mainly for implementations that want to use qlog as their one and only logging format but still want to support unstructured string messages
-struct LogLevelInfo {
-	message: Option<String>
-}
-
-// TODO: Look at what to do with the extension (see RFC draft)
-/// Used mainly for implementations that want to use qlog as their one and only logging format but still want to support unstructured string messages
-struct LogLevelDebug {
-	message: Option<String>
-}
-
-// TODO: Look at what to do with the extension (see RFC draft)
-/// Used mainly for implementations that want to use qlog as their one and only logging format but still want to support unstructured string messages
-struct LogLevelVerbose {
-	message: Option<String>
-}
-
-struct RawInfo {
-	/// The full byte length
-	length: Option<u64>,
-	/// The byte length of the payload
-	payload_length: Option<u64>,
-	/// The (potentially truncated) contents, including headers and possibly trailers
-	data: Option<Vec<u8>>
-}
-
-impl RawInfo {
-	fn new(length: Option<u64>, payload_length: Option<u64>, data: Option<Vec<u8>>) -> RawInfo {
-		RawInfo { length, payload_length, data }
-	}
 }
