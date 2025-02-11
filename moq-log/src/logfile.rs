@@ -4,6 +4,8 @@ use chrono::{DateTime, FixedOffset};
 use serde::Serialize;
 use serde_with::skip_serializing_none;
 
+use crate::util::VERSION_STRING;
+
 #[derive(Serialize)]
 pub struct QlogFileSeq {
 	#[serde(flatten)]
@@ -41,7 +43,7 @@ impl LogFile {
 			description,
 			// TODO: Maybe add QUIC events to this
 			// TODO: Change MoQ event space (this is a placeholder)
-			event_schemas: vec!["urn:ietf:params:qlog:events:moq-transfork-03".to_string()]
+			event_schemas: vec![format!("urn:ietf:params:qlog:events:{VERSION_STRING}")]
 		}
 	}
 }

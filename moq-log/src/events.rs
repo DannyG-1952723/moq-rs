@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
-use crate::{logfile::{GroupId, PathId, TimeFormat}, util::{bytes_to_hexstring, HexString}};
+use chrono::Utc;
 
-const MAX_LOG_DATA_LEN: usize = 64;
+use crate::{logfile::{GroupId, PathId, TimeFormat}, util::{bytes_to_hexstring, HexString, MAX_LOG_DATA_LEN, VERSION_STRING}};
 
-struct Event {
-	time: f64,
+pub struct Event {
+	time: i64,
 	name: String,
 	data: ProtocolEventData,
 	path: Option<PathId>,
@@ -16,13 +16,194 @@ struct Event {
 	custom_fields: HashMap<String, String>
 }
 
+impl Event {
+	pub fn stream_created(stream_type: StreamType) -> Self {
+		let event_data = MoqEventData::StreamCreated(Stream::new(stream_type));
+
+		Self::new("stream_created", ProtocolEventData::MoqEventData(event_data))
+	}
+
+	pub fn stream_parsed(stream_type: StreamType) -> Self {
+		let event_data = MoqEventData::StreamParsed(Stream::new(stream_type));
+
+		Self::new("stream_parsed", ProtocolEventData::MoqEventData(event_data))
+	}
+
+	pub fn session_started_client(supported_versions: Vec<u64>, extension_ids: Option<Vec<u64>>) -> Self {
+		let event_data = MoqEventData::SessionStarted(SessionMessage::SessionClient(SessionClient::new(supported_versions, extension_ids)));
+
+		Self::new("session_started", ProtocolEventData::MoqEventData(event_data))
+	}
+
+	pub fn session_started_server(selected_version: u64, extension_ids: Option<Vec<u64>>) -> Self {
+		let event_data = MoqEventData::SessionStarted(SessionMessage::SessionServer(SessionServer::new(selected_version, extension_ids)));
+
+		Self::new("session_started", ProtocolEventData::MoqEventData(event_data))
+	}
+
+	pub fn session_update_created(session_bitrate: u64) -> Self {
+		let event_data = MoqEventData::SessionUpdateCreated(SessionUpdate::new(session_bitrate));
+
+		Self::new("session_update_created", ProtocolEventData::MoqEventData(event_data))
+	}
+
+	pub fn session_update_parsed(session_bitrate: u64) -> Self {
+		let event_data = MoqEventData::SessionUpdateParsed(SessionUpdate::new(session_bitrate));
+
+		Self::new("session_update_parsed", ProtocolEventData::MoqEventData(event_data))
+	}
+
+	pub fn announce_please_created(track_prefix_parts: Vec<String>) -> Self {
+		let event_data = MoqEventData::AnnouncePleaseCreated(AnnouncePlease::new(track_prefix_parts));
+
+		Self::new("announce_please_created", ProtocolEventData::MoqEventData(event_data))
+	}
+
+	pub fn announce_please_parsed(track_prefix_parts: Vec<String>) -> Self {
+		let event_data = MoqEventData::AnnouncePleaseParsed(AnnouncePlease::new(track_prefix_parts));
+
+		Self::new("announce_please_parsed", ProtocolEventData::MoqEventData(event_data))
+	}
+
+	pub fn announce_created(announce_status: AnnounceStatus, track_suffix_parts: Vec<Vec<String>>) -> Self {
+		let event_data = MoqEventData::AnnounceCreated(Announce::new(announce_status, track_suffix_parts));
+
+		Self::new("announce_created", ProtocolEventData::MoqEventData(event_data))
+	}
+
+	pub fn announce_parsed(announce_status: AnnounceStatus, track_suffix_parts: Vec<Vec<String>>) -> Self {
+		let event_data = MoqEventData::AnnounceParsed(Announce::new(announce_status, track_suffix_parts));
+
+		Self::new("announce_parsed", ProtocolEventData::MoqEventData(event_data))
+	}
+
+	pub fn subscription_started(subscribe_id: u64, track_path_parts: Vec<String>, track_priority: u64, group_order: u64, group_expires: u64, group_min: u64, group_max: u64) -> Self {
+		let event_data = MoqEventData::SubscriptionStarted(Subscribe::new(subscribe_id, track_path_parts, track_priority, group_order, group_expires, group_min, group_max));
+
+		Self::new("subscription_started", ProtocolEventData::MoqEventData(event_data))
+	}
+
+	pub fn subscription_update_created(track_priority: u64, group_order: u64, group_expires: u64, group_min: u64, group_max: u64) -> Self {
+		let event_data = MoqEventData::SubscriptionUpdateCreated(SubscribeUpdate::new(track_priority, group_order, group_expires, group_min, group_max));
+
+		Self::new("subscription_update_created", ProtocolEventData::MoqEventData(event_data))
+	}
+
+	pub fn subscription_update_parsed(track_priority: u64, group_order: u64, group_expires: u64, group_min: u64, group_max: u64) -> Self {
+		let event_data = MoqEventData::SubscriptionUpdateParsed(SubscribeUpdate::new(track_priority, group_order, group_expires, group_min, group_max));
+
+		Self::new("subscription_update_parsed", ProtocolEventData::MoqEventData(event_data))
+	}
+
+	pub fn subscription_gap_created(group_start: u64, group_count: u64, group_error_code: u64) -> Self {
+		let event_data = MoqEventData::SubscriptionGapCreated(SubscribeGap::new(group_start, group_count, group_error_code));
+
+		Self::new("subscription_gap_created", ProtocolEventData::MoqEventData(event_data))
+	}
+
+	pub fn subscription_gap_parsed(group_start: u64, group_count: u64, group_error_code: u64) -> Self {
+		let event_data = MoqEventData::SubscriptionGapParsed(SubscribeGap::new(group_start, group_count, group_error_code));
+
+		Self::new("subscription_gap_parsed", ProtocolEventData::MoqEventData(event_data))
+	}
+
+	pub fn info_created(track_priority: u64, group_latest: u64, group_order: u64, group_expires: u64) -> Self {
+		let event_data = MoqEventData::InfoCreated(Info::new(track_priority, group_latest, group_order, group_expires));
+
+		Self::new("info_created", ProtocolEventData::MoqEventData(event_data))
+	}
+
+	pub fn info_parsed(track_priority: u64, group_latest: u64, group_order: u64, group_expires: u64) -> Self {
+		let event_data = MoqEventData::InfoParsed(Info::new(track_priority, group_latest, group_order, group_expires));
+
+		Self::new("info_parsed", ProtocolEventData::MoqEventData(event_data))
+	}
+
+	pub fn info_please_created(track_path_parts: Vec<String>) -> Self {
+		let event_data = MoqEventData::InfoPleaseCreated(InfoPlease::new(track_path_parts));
+
+		Self::new("info_please_created", ProtocolEventData::MoqEventData(event_data))
+	}
+
+	pub fn info_please_parsed(track_path_parts: Vec<String>) -> Self {
+		let event_data = MoqEventData::InfoPleaseParsed(InfoPlease::new(track_path_parts));
+
+		Self::new("info_please_parsed", ProtocolEventData::MoqEventData(event_data))
+	}
+
+	pub fn fetch_created(track_path_parts: Vec<String>, track_priority: u64, group_sequence: u64, frame_sequence: u64) -> Self {
+		let event_data = MoqEventData::FetchCreated(Fetch::new(track_path_parts, track_priority, group_sequence, frame_sequence));
+
+		Self::new("fetch_created", ProtocolEventData::MoqEventData(event_data))
+	}
+
+	pub fn fetch_parsed(track_path_parts: Vec<String>, track_priority: u64, group_sequence: u64, frame_sequence: u64) -> Self {
+		let event_data = MoqEventData::FetchParsed(Fetch::new(track_path_parts, track_priority, group_sequence, frame_sequence));
+
+		Self::new("fetch_parsed", ProtocolEventData::MoqEventData(event_data))
+	}
+
+	pub fn fetch_update_created(track_priority: u64) -> Self {
+		let event_data = MoqEventData::FetchUpdateCreated(FetchUpdate::new(track_priority));
+
+		Self::new("fetch_update_created", ProtocolEventData::MoqEventData(event_data))
+	}
+
+	pub fn fetch_update_parsed(track_priority: u64) -> Self {
+		let event_data = MoqEventData::FetchUpdateParsed(FetchUpdate::new(track_priority));
+
+		Self::new("fetch_update_parsed", ProtocolEventData::MoqEventData(event_data))
+	}
+
+	pub fn group_created(subscribe_id: u64, group_sequence: u64) -> Self {
+		let event_data = MoqEventData::GroupCreated(Group::new(subscribe_id, group_sequence));
+
+		Self::new("group_created", ProtocolEventData::MoqEventData(event_data))
+	}
+
+	pub fn group_parsed(subscribe_id: u64, group_sequence: u64) -> Self {
+		let event_data = MoqEventData::GroupParsed(Group::new(subscribe_id, group_sequence));
+
+		Self::new("group_parsed", ProtocolEventData::MoqEventData(event_data))
+	}
+
+	pub fn frame_created(payload: RawInfo) -> Self {
+		let event_data = MoqEventData::FrameCreated(Frame::new(payload));
+
+		Self::new("frame_created", ProtocolEventData::MoqEventData(event_data))
+	}
+
+	pub fn frame_parsed(payload: RawInfo) -> Self {
+		let event_data = MoqEventData::FrameParsed(Frame::new(payload));
+
+		Self::new("frame_parsed", ProtocolEventData::MoqEventData(event_data))
+	}
+
+	// Assumes default TimeFormat (relative to epoch, epoch = "1970-01-01T00:00:00.000Z")
+	// TODO: Base 'time' value upon chosen TimeFormat
+	fn new(event_name: &str, data: ProtocolEventData) -> Self {
+		Self {
+			time: Utc::now().timestamp_millis(),
+			name: format!("{VERSION_STRING}:{event_name}"),
+			data,
+			path: Some("".to_string()),
+			time_format: None,
+			protocol_types: None,
+			// TODO: Maybe add a group ID
+			group_id: None,
+			system_info: None,
+			custom_fields: HashMap::new()
+		}
+	}
+}
+
 enum ProtocolEventData {
 	MoqEventData(MoqEventData)
 }
 
 enum MoqEventData {
-	StreamCreated(StreamInfo),
-	StreamParsed(StreamInfo),
+	StreamCreated(Stream),
+	StreamParsed(Stream),
 	SessionStarted(SessionMessage),
 	SessionUpdateCreated(SessionUpdate),
 	SessionUpdateParsed(SessionUpdate),
@@ -49,17 +230,17 @@ enum MoqEventData {
 	FrameParsed(Frame)
 }
 
-struct StreamInfo {
+struct Stream {
 	stream_type: StreamType
 }
 
-impl StreamInfo {
+impl Stream {
 	fn new(stream_type: StreamType) -> Self {
 		Self { stream_type }
 	}
 }
 
-enum StreamType {
+pub enum StreamType {
 	Session,
 	Announced,
 	Subscribe,
@@ -130,7 +311,7 @@ impl Announce {
 	}
 }
 
-enum AnnounceStatus {
+pub enum AnnounceStatus {
 	/// Path is no longer available
 	Ended,
 	/// Path is now available
@@ -248,7 +429,7 @@ impl Frame {
 	}
 }
 
-struct RawInfo {
+pub struct RawInfo {
 	/// The full byte length
 	length: Option<u64>,
 	/// The byte length of the payload
@@ -258,7 +439,7 @@ struct RawInfo {
 }
 
 impl RawInfo {
-	fn new(length: Option<u64>, data: Option<&[u8]>) -> Self {
+	pub fn new(length: Option<u64>, data: Option<&[u8]>) -> Self {
 		match data {
 			Some(payload) => {
 				let payload_length: Option<u64> = Some(payload.len().try_into().unwrap());
