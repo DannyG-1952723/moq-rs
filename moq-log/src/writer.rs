@@ -2,7 +2,7 @@ use std::{env, fs::File, io::{BufWriter, Write}, sync::{LazyLock, Mutex}};
 
 use serde::Serialize;
 
-use crate::logfile::{CommonFields, LogFile, QlogFileSeq, TraceSeq, VantagePoint};
+use crate::{events::Event, logfile::{CommonFields, LogFile, QlogFileSeq, TraceSeq, VantagePoint}};
 
 // Static variable so that a logger variable doesn't need to be passed to every function wherein logging occurs
 static QLOG_WRITER: LazyLock<Mutex<QlogWriter>> = LazyLock::new(|| Mutex::new(QlogWriter::init()));
@@ -38,14 +38,14 @@ impl QlogWriter {
 
 			let qlog_file_seq = QlogFileSeq::new(log_file_details, trace);
 
-			QlogWriter::log(writer, &qlog_file_seq);
+			Self::log(writer, &qlog_file_seq);
 
 			qlog_writer.file_details_written = true;
 		}
 	}
 
 	// TODO: Update (current implementation is to test if writing works)
-	pub fn log_event(text: &String) {
+	pub fn log_event(event: Event) {
 		let mut qlog_writer = QLOG_WRITER.lock().unwrap();
 
 		if !qlog_writer.file_details_written {
@@ -53,8 +53,7 @@ impl QlogWriter {
 		}
 
 		if let Some(ref mut writer) = qlog_writer.writer {
-			writer.write(text.as_bytes()).unwrap();
-			writer.flush().unwrap();
+			Self::log(writer, &event);
 		}
 	}
 
@@ -63,9 +62,9 @@ impl QlogWriter {
 	fn log(writer: &mut BufWriter<File>, data: &impl Serialize) {
 		let json = serde_json::to_string_pretty(data).unwrap();
 
-		writer.write_all(QlogWriter::RECORD_SEPARATOR).unwrap();
+		writer.write_all(Self::RECORD_SEPARATOR).unwrap();
 		writer.write_all(json.as_bytes()).unwrap();
-		writer.write_all(QlogWriter::LINE_FEED).unwrap();
+		writer.write_all(Self::LINE_FEED).unwrap();
 
 		writer.flush().unwrap();
 	}

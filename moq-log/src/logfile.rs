@@ -4,7 +4,7 @@ use chrono::{DateTime, FixedOffset};
 use serde::Serialize;
 use serde_with::skip_serializing_none;
 
-use crate::util::VERSION_STRING;
+use crate::util::{VERSION_STRING, is_empty_or_none, PathId, GroupId};
 
 #[derive(Serialize)]
 pub struct QlogFileSeq {
@@ -63,13 +63,6 @@ impl TraceSeq {
 	}
 }
 
-fn is_empty_or_none(path: &Option<PathId>) -> bool {
-    match path {
-        Some(p) => p.is_empty(),
-        None => true,
-    }
-}
-
 #[skip_serializing_none]
 #[derive(Serialize)]
 pub struct CommonFields {
@@ -103,9 +96,6 @@ impl Default for CommonFields {
 		}
 	}
 }
-
-pub type PathId = String;
-pub type GroupId = String;
 
 #[derive(Default, Serialize)]
 #[serde(rename_all = "snake_case")]
