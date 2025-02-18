@@ -3,6 +3,7 @@ use std::fmt;
 use crate::{coding::*, message, Error};
 
 use moq_async::Close;
+use moq_log::{events::Event, writer::QlogWriter};
 
 pub(super) struct Writer {
 	stream: web_transport::SendStream,
@@ -19,6 +20,8 @@ impl Writer {
 
 	pub async fn open(session: &mut web_transport::Session, typ: message::DataType) -> Result<Self, Error> {
 		let send = session.open_uni().await?;
+
+		QlogWriter::log_event(Event::stream_created(typ.to_log_type()));
 
 		let mut writer = Self::new(send);
 		writer.encode(&typ).await?;

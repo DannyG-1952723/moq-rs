@@ -63,15 +63,24 @@ impl Event {
 		Self::new("announce_parsed", MoqEventData::AnnounceParsed(Announce::new(announce_status, track_suffix_parts)))
 	}
 
-	pub fn subscription_started(subscribe_id: u64, track_path_parts: Vec<String>, track_priority: u64, group_order: u64, group_expires: u64, group_min: u64, group_max: u64) -> Self {
+	pub fn subscription_started(subscribe_id: u64, track_path_parts: Vec<String>, track_priority: u64, group_order: u64, group_expires: u64, group_min: Option<u64>, group_max: Option<u64>) -> Self {
+		let group_min = group_min.unwrap_or(0);
+		let group_max = group_max.unwrap_or(0);
+
 		Self::new("subscription_started", MoqEventData::SubscriptionStarted(Subscribe::new(subscribe_id, track_path_parts, track_priority, group_order, group_expires, group_min, group_max)))
 	}
 
-	pub fn subscription_update_created(track_priority: u64, group_order: u64, group_expires: u64, group_min: u64, group_max: u64) -> Self {
+	pub fn subscription_update_created(track_priority: u64, group_order: u64, group_expires: u64, group_min: Option<u64>, group_max: Option<u64>) -> Self {
+		let group_min = group_min.unwrap_or(0);
+		let group_max = group_max.unwrap_or(0);
+
 		Self::new("subscription_update_created", MoqEventData::SubscriptionUpdateCreated(SubscribeUpdate::new(track_priority, group_order, group_expires, group_min, group_max)))
 	}
 
-	pub fn subscription_update_parsed(track_priority: u64, group_order: u64, group_expires: u64, group_min: u64, group_max: u64) -> Self {
+	pub fn subscription_update_parsed(track_priority: u64, group_order: u64, group_expires: u64, group_min: Option<u64>, group_max: Option<u64>) -> Self {
+		let group_min = group_min.unwrap_or(0);
+		let group_max = group_max.unwrap_or(0);
+
 		Self::new("subscription_update_parsed", MoqEventData::SubscriptionUpdateParsed(SubscribeUpdate::new(track_priority, group_order, group_expires, group_min, group_max)))
 	}
 
@@ -123,12 +132,12 @@ impl Event {
 		Self::new("group_parsed", MoqEventData::GroupParsed(Group::new(subscribe_id, group_sequence)))
 	}
 
-	pub fn frame_created(payload: RawInfo) -> Self {
-		Self::new("frame_created", MoqEventData::FrameCreated(Frame::new(payload)))
+	pub fn frame_created(payload_length: Option<u64>, payload: Option<&[u8]>) -> Self {
+		Self::new("frame_created", MoqEventData::FrameCreated(Frame::new(RawInfo::new(payload_length, payload))))
 	}
 
-	pub fn frame_parsed(payload: RawInfo) -> Self {
-		Self::new("frame_parsed", MoqEventData::FrameParsed(Frame::new(payload)))
+	pub fn frame_parsed(payload_length: Option<u64>, payload: Option<&[u8]>) -> Self {
+		Self::new("frame_parsed", MoqEventData::FrameParsed(Frame::new(RawInfo::new(payload_length, payload))))
 	}
 
 	// Assumes default TimeFormat (relative to epoch, epoch = "1970-01-01T00:00:00.000Z")

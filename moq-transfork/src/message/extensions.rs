@@ -57,4 +57,8 @@ impl Extensions {
 		e.encode(&mut value);
 		self.0.insert(E::id(), value);
 	}
+
+	pub fn keys(&self) -> Vec<u64> {
+		self.0.keys().copied().collect()
+	}
 }

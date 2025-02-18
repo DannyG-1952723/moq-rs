@@ -1,3 +1,5 @@
+use moq_log::events::StreamType;
+
 use crate::coding::*;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -7,6 +9,18 @@ pub enum ControlType {
 	Subscribe,
 	Fetch,
 	Info,
+}
+
+impl ControlType {
+	pub fn to_log_type(&self) -> StreamType {
+		match self {
+			ControlType::Session => StreamType::Session,
+			ControlType::Announce => StreamType::Announced,
+			ControlType::Subscribe => StreamType::Subscribe,
+			ControlType::Fetch => StreamType::Fetch,
+			ControlType::Info => StreamType::Info,
+		}
+	}
 }
 
 impl Decode for ControlType {
@@ -39,6 +53,14 @@ impl Encode for ControlType {
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum DataType {
 	Group,
+}
+
+impl DataType {
+	pub fn to_log_type(&self) -> StreamType {
+		match self {
+    		DataType::Group => StreamType::Group,
+		}
+	}
 }
 
 impl Decode for DataType {

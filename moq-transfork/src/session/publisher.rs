@@ -1,6 +1,7 @@
 use std::collections::{hash_map, HashMap};
 
 use futures::{stream::FuturesUnordered, StreamExt};
+use moq_log::{events::{AnnounceStatus, Event}, writer::QlogWriter};
 
 use crate::{
 	message,
@@ -92,6 +93,8 @@ impl Publisher {
 		let prefix = interest.prefix;
 		tracing::debug!(?prefix, "announce interest");
 
+		QlogWriter::log_event(Event::announce_please_parsed(prefix.to_vec()));
+
 		let mut announced = self.announced.subscribe_prefix(prefix.clone());
 
 		// Flush any synchronously announced paths
@@ -99,15 +102,27 @@ impl Publisher {
 			match announced {
 				Announced::Active(suffix) => {
 					tracing::debug!(?prefix, ?suffix, "announce");
+
+					// TODO: Check if this is right
+					QlogWriter::log_event(Event::announce_created(AnnounceStatus::Active, vec![suffix.to_vec()]));
+
 					stream.writer.encode(&message::Announce::Active { suffix }).await?;
 				}
 				Announced::Ended(suffix) => {
 					tracing::debug!(?prefix, ?suffix, "unannounce");
+
+					// TODO: Check if this is right
+					QlogWriter::log_event(Event::announce_created(AnnounceStatus::Ended, vec![suffix.to_vec()]));
+
 					stream.writer.encode(&message::Announce::Ended { suffix }).await?;
 				}
 				Announced::Live => {
 					// Indicate that we're caught up to live.
 					tracing::debug!(?prefix, "live");
+
+					// TODO: Check if this is right
+					QlogWriter::log_event(Event::announce_created(AnnounceStatus::Live, vec![]));
+
 					stream.writer.encode(&message::Announce::Live).await?;
 				}
 			}
@@ -119,7 +134,11 @@ impl Publisher {
 	}
 
 	pub async fn recv_subscribe(&mut self, stream: &mut Stream) -> Result<(), Error> {
-		let subscribe = stream.reader.decode().await?;
+		let subscribe: message::Subscribe = stream.reader.decode().await?;
+
+		// TODO: Get the real value of 'group_expires'
+		QlogWriter::log_event(Event::subscription_started(subscribe.id, subscribe.path.to_vec(), subscribe.priority.try_into().unwrap(), subscribe.group_order as u64, 0, subscribe.group_min, subscribe.group_max));
+
 		self.serve_subscribe(stream, subscribe).await
 	}
 
@@ -141,6 +160,9 @@ impl Publisher {
 
 		tracing::info!(?info, "active");
 
+		// TODO: Get the real value of 'group_expires'
+		QlogWriter::log_event(Event::info_created(info.track_priority.try_into().unwrap(), info.group_latest, info.group_order as u64, 0));
+
 		stream.writer.encode(&info).await?;
 
 		let mut tasks = FuturesUnordered::new();
@@ -158,8 +180,11 @@ impl Publisher {
 					});
 				},
 				res = stream.reader.decode_maybe::<message::SubscribeUpdate>(), if !complete => match res? {
-					Some(_update) => {
+					Some(update) => {
 						// TODO use it
+
+						// TODO: Get the real value of 'group_expires'
+						QlogWriter::log_event(Event::subscription_update_parsed(update.priority, update.group_order as u64, 0, update.group_min, update.group_max));
 					},
 					// Subscribe has completed
 					None => {
@@ -178,6 +203,7 @@ impl Publisher {
 							code: err.to_code(),
 						};
 
+						// TODO: Maybe log
 						stream.writer.encode(&drop).await?;
 					}
 				},
@@ -214,12 +240,18 @@ impl Publisher {
 			sequence: group.sequence,
 		};
 
+		QlogWriter::log_event(Event::group_created(msg.subscribe, msg.sequence));
+
 		stream.encode(&msg).await?;
 
 		let mut frames = 0;
 
 		while let Some(mut frame) = group.next_frame().await? {
 			let header = message::Frame { size: frame.size };
+
+			// TODO: Maybe add the payload
+			QlogWriter::log_event(Event::frame_created(Some(frame.size.try_into().unwrap()), None));
+
 			stream.encode(&header).await?;
 
 			let mut remain = frame.size;
@@ -247,7 +279,10 @@ impl Publisher {
 	}
 
 	pub async fn recv_fetch(&mut self, stream: &mut Stream) -> Result<(), Error> {
-		let fetch = stream.reader.decode().await?;
+		let fetch: message::Fetch = stream.reader.decode().await?;
+
+		QlogWriter::log_event(Event::fetch_parsed(fetch.path.to_vec(), fetch.priority.try_into().unwrap(), fetch.group, fetch.offset.try_into().unwrap()));
+
 		self.serve_fetch(stream, fetch).await
 	}
 
@@ -266,7 +301,10 @@ impl Publisher {
 	}
 
 	pub async fn recv_info(&mut self, stream: &mut Stream) -> Result<(), Error> {
-		let info = stream.reader.decode().await?;
+		let info: message::InfoRequest = stream.reader.decode().await?;
+
+		QlogWriter::log_event(Event::info_please_parsed(info.path.to_vec()));
+
 		self.serve_info(stream, info).await
 	}
 
@@ -283,6 +321,9 @@ impl Publisher {
 			track_priority: track.priority,
 			group_order: track.order,
 		};
+
+		// TODO: Get the real value of 'group_expires'
+		QlogWriter::log_event(Event::info_created(info.track_priority.try_into().unwrap(), info.group_latest, info.group_order as u64, 0));
 
 		stream.writer.encode(&info).await?;
 

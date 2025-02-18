@@ -10,6 +10,7 @@ use crate::{
 };
 
 use moq_async::{spawn, Lock, OrClose};
+use moq_log::{events::{AnnounceStatus, Event}, writer::QlogWriter};
 
 use super::{AnnouncedConsumer, Reader, Stream};
 
@@ -60,10 +61,11 @@ impl Subscriber {
 	}
 
 	async fn run_announce(stream: &mut Stream, prefix: Path, mut announced: AnnouncedProducer) -> Result<(), Error> {
-		stream
-			.writer
-			.encode(&message::AnnouncePlease { prefix: prefix.clone() })
-			.await?;
+		let msg = message::AnnouncePlease { prefix: prefix.clone() };
+
+		QlogWriter::log_event(Event::announce_please_created(msg.prefix.to_vec()));
+
+		stream.writer.encode(&msg).await?;
 
 		tracing::debug!(?prefix, "waiting for announcements");
 
@@ -95,6 +97,9 @@ impl Subscriber {
 				if !announced.announce(path) {
 					return Err(Error::Duplicate);
 				}
+
+				// TODO: Check if this is right
+				QlogWriter::log_event(Event::announce_parsed(AnnounceStatus::Active, vec![suffix.to_vec()]));
 			}
 			message::Announce::Ended { suffix } => {
 				let path = prefix.clone().append(&suffix);
@@ -102,8 +107,13 @@ impl Subscriber {
 				if !announced.unannounce(&path) {
 					return Err(Error::NotFound);
 				}
+
+				// TODO: Check if this is right
+				QlogWriter::log_event(Event::announce_parsed(AnnounceStatus::Ended, vec![suffix.to_vec()]));
 			}
 			message::Announce::Live => {
+				// TODO: Check if this is right
+				QlogWriter::log_event(Event::announce_parsed(AnnounceStatus::Live, vec![]));
 				announced.live();
 			}
 		};
@@ -155,10 +165,16 @@ impl Subscriber {
 			group_max: None,
 		};
 
+		// TODO: Get the real value of 'group_expires'
+		QlogWriter::log_event(Event::subscription_started(request.id, request.path.to_vec(), request.priority.try_into().unwrap(), request.group_order as u64, 0, request.group_min, request.group_max));
+
 		stream.writer.encode(&request).await?;
 
 		// TODO use the response to correctly populate the track info
 		let info: message::Info = stream.reader.decode().await?;
+
+		// TODO: Get the real value of 'group_expires'
+		QlogWriter::log_event(Event::info_parsed(info.track_priority.try_into().unwrap(), info.group_latest, info.group_order as u64, 0));
 
 		tracing::info!(?info, "active");
 
@@ -170,6 +186,7 @@ impl Subscriber {
 							tracing::info!(?drop, "dropped");
 							// TODO expose updates to application
 							// TODO use to detect gaps
+							// TODO: Maybe log
 						},
 						None => break,
 					}
@@ -185,7 +202,10 @@ impl Subscriber {
 	}
 
 	pub async fn recv_group(&mut self, stream: &mut Reader) -> Result<(), Error> {
-		let group = stream.decode().await?;
+		let group: message::Group = stream.decode().await?;
+
+		QlogWriter::log_event(Event::group_parsed(group.subscribe, group.sequence));
+
 		self.recv_group_inner(stream, group).await.or_close(stream)
 	}
 
@@ -210,6 +230,9 @@ impl Subscriber {
 
 				frame.write(chunk);
 			}
+
+			// TODO: Maybe add the payload
+			QlogWriter::log_event(Event::frame_parsed(Some(frame.size.try_into().unwrap()), None));
 		}
 
 		Ok(())

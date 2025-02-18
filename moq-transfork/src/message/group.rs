@@ -28,8 +28,8 @@ impl Encode for Group {
 /// Indicates if groups should be delivered in ascending or descending order.
 #[derive(Clone, Debug, Copy, PartialEq, Eq)]
 pub enum GroupOrder {
-	Asc,
-	Desc,
+	Asc = 0,
+	Desc = 1,
 }
 
 impl Decode for GroupOrder {

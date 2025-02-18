@@ -1,7 +1,7 @@
 use crate::{message, AnnouncedConsumer, Error, Path, RouterConsumer, Track, TrackConsumer};
 
 use moq_async::{spawn, Close, OrClose};
-use moq_log::writer::QlogWriter;
+use moq_log::{events::Event, writer::QlogWriter};
 
 mod publisher;
 mod reader;
@@ -67,8 +67,13 @@ impl Session {
 			extensions: Default::default(),
 		};
 
+		let versions: Vec<u64> = client.versions.iter().map(|&v| v.into()).collect();
+		QlogWriter::log_event(Event::session_started_client(versions, Some(client.extensions.keys())));
+
 		setup.writer.encode(&client).await?;
 		let server: message::ServerSetup = setup.reader.decode().await?;
+
+		QlogWriter::log_event(Event::session_started_server(server.version.into(), Some(server.extensions.keys())));
 
 		tracing::info!(version = ?server.version, "connected");
 
@@ -79,7 +84,9 @@ impl Session {
 	pub async fn accept<T: Into<web_transport::Session>>(session: T) -> Result<Self, Error> {
 		let mut session = session.into();
 		let mut stream = Stream::accept(&mut session).await?;
-		let kind = stream.reader.decode().await?;
+		let kind: message::ControlType = stream.reader.decode().await?;
+
+		QlogWriter::log_event(Event::stream_parsed(kind.to_log_type()));
 
 		if kind != message::ControlType::Session {
 			return Err(Error::UnexpectedStream(kind));
@@ -92,6 +99,9 @@ impl Session {
 	async fn accept_setup(control: &mut Stream) -> Result<(), Error> {
 		let client: message::ClientSetup = control.reader.decode().await?;
 
+		let versions: Vec<u64> = client.versions.iter().map(|&v| v.into()).collect();
+		QlogWriter::log_event(Event::session_started_client(versions, Some(client.extensions.keys())));
+
 		if !client.versions.contains(&message::Version::CURRENT) {
 			return Err(Error::Version(client.versions, [message::Version::CURRENT].into()));
 		}
@@ -101,6 +111,8 @@ impl Session {
 			extensions: Default::default(),
 		};
 
+		QlogWriter::log_event(Event::session_started_server(server.version.into(), Some(server.extensions.keys())));
+
 		control.writer.encode(&server).await?;
 
 		tracing::info!(version = ?server.version, "connected");
@@ -109,7 +121,9 @@ impl Session {
 	}
 
 	async fn run_session(mut stream: Stream) -> Result<(), Error> {
-		while let Some(_info) = stream.reader.decode_maybe::<message::Info>().await? {}
+		while let Some(info) = stream.reader.decode_maybe::<message::Info>().await? {
+			QlogWriter::log_event(Event::info_parsed(info.track_priority.try_into().unwrap(), info.group_latest, info.group_order as u64, 0));
+		}
 		Err(Error::Cancel)
 	}
 
@@ -125,7 +139,10 @@ impl Session {
 	}
 
 	async fn run_data(stream: &mut Reader, mut subscriber: Subscriber) -> Result<(), Error> {
-		let kind = stream.decode().await?;
+		let kind: message::DataType = stream.decode().await?;
+
+		QlogWriter::log_event(Event::stream_parsed(kind.to_log_type()));
+
 		match kind {
 			message::DataType::Group => subscriber.recv_group(stream).await,
 		}
@@ -146,7 +163,10 @@ impl Session {
 	}
 
 	async fn run_control(stream: &mut Stream, mut publisher: Publisher) -> Result<(), Error> {
-		let kind = stream.reader.decode().await?;
+		let kind: message::ControlType = stream.reader.decode().await?;
+
+		QlogWriter::log_event(Event::stream_parsed(kind.to_log_type()));
+
 		match kind {
 			message::ControlType::Session => Err(Error::UnexpectedStream(kind)),
 			message::ControlType::Announce => publisher.recv_announce(stream).await,
@@ -158,10 +178,6 @@ impl Session {
 
 	/// Publish a track, automatically announcing and serving it.
 	pub fn publish(&mut self, track: TrackConsumer) -> Result<(), Error> {
-		// TODO: Update and probably call somewhere else (this is a test log)
-		let log_msg = String::from("Publishing a new track");
-		QlogWriter::log_event(&log_msg);
-
 		self.publisher.publish(track)
 	}
 
@@ -179,10 +195,6 @@ impl Session {
 
 	/// Subscribe to a track and start receiving data over the network.
 	pub fn subscribe(&self, track: Track) -> TrackConsumer {
-		// TODO: Update and probably call somewhere else (this is a test log)
-		let log_msg = String::from("Subscribing to a track");
-		QlogWriter::log_event(&log_msg);
-
 		self.subscriber.subscribe(track)
 	}
 
