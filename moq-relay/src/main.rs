@@ -5,6 +5,7 @@ mod web;
 
 pub use cluster::*;
 pub use connection::*;
+use moq_log::{logfile::{VantagePoint, VantagePointType}, writer::QlogWriter};
 pub use origins::*;
 pub use web::*;
 
@@ -39,6 +40,14 @@ pub struct Config {
 async fn main() -> anyhow::Result<()> {
 	let config = Config::parse();
 	config.log.init();
+
+	QlogWriter::log_file_details(
+		Some("MoQ Relay Logs".to_string()),
+		Some("All logs produced by the MoQ relay".to_string()),
+		None,
+		None,
+		Some(VantagePoint::new(Some("relay".to_string()), VantagePointType::Server, None))
+	);
 
 	let bind = tokio::net::lookup_host(config.bind)
 		.await

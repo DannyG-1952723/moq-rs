@@ -1358,6 +1358,7 @@ dependencies = [
  "axum",
  "clap",
  "hyper-serve",
+ "moq-log",
  "moq-native",
  "moq-transfork",
  "tokio",

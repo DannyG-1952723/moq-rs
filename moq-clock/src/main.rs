@@ -53,7 +53,7 @@ async fn main() -> anyhow::Result<()> {
 			None,
 			Some("Publisher".to_string()),
 			Some("Logs taken from the perspective of the publisher".to_string()),
-			Some(VantagePoint::new(Some("clock-pub".to_string()), VantagePointType::Server, None))
+			Some(VantagePoint::new(Some("clock-pub".to_string()), VantagePointType::Client, None))
 		),
 		Command::Subscribe => QlogWriter::log_file_details(
 			Some("MoQ Clock Logs".to_string()),
