@@ -165,16 +165,14 @@ impl Subscriber {
 			group_max: None,
 		};
 
-		// TODO: Get the real value of 'group_expires'
-		QlogWriter::log_event(Event::subscription_started(request.id, request.path.to_vec(), request.priority.try_into().unwrap(), request.group_order as u64, 0, request.group_min, request.group_max));
+		QlogWriter::log_event(Event::subscription_started(request.id, request.path.to_vec(), request.priority.try_into().unwrap(), request.group_order as u64, request.group_min, request.group_max));
 
 		stream.writer.encode(&request).await?;
 
 		// TODO use the response to correctly populate the track info
 		let info: message::Info = stream.reader.decode().await?;
 
-		// TODO: Get the real value of 'group_expires'
-		QlogWriter::log_event(Event::info_parsed(info.track_priority.try_into().unwrap(), info.group_latest, info.group_order as u64, 0));
+		QlogWriter::log_event(Event::info_parsed(info.track_priority.try_into().unwrap(), info.group_latest, info.group_order as u64));
 
 		tracing::info!(?info, "active");
 

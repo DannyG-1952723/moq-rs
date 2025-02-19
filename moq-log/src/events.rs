@@ -63,25 +63,25 @@ impl Event {
 		Self::new("announce_parsed", MoqEventData::AnnounceParsed(Announce::new(announce_status, track_suffix_parts)))
 	}
 
-	pub fn subscription_started(subscribe_id: u64, track_path_parts: Vec<String>, track_priority: u64, group_order: u64, group_expires: u64, group_min: Option<u64>, group_max: Option<u64>) -> Self {
+	pub fn subscription_started(subscribe_id: u64, track_path_parts: Vec<String>, track_priority: u64, group_order: u64, group_min: Option<u64>, group_max: Option<u64>) -> Self {
 		let group_min = group_min.unwrap_or(0);
 		let group_max = group_max.unwrap_or(0);
 
-		Self::new("subscription_started", MoqEventData::SubscriptionStarted(Subscribe::new(subscribe_id, track_path_parts, track_priority, group_order, group_expires, group_min, group_max)))
+		Self::new("subscription_started", MoqEventData::SubscriptionStarted(Subscribe::new(subscribe_id, track_path_parts, track_priority, group_order, group_min, group_max)))
 	}
 
-	pub fn subscription_update_created(track_priority: u64, group_order: u64, group_expires: u64, group_min: Option<u64>, group_max: Option<u64>) -> Self {
+	pub fn subscription_update_created(track_priority: u64, group_order: u64, group_min: Option<u64>, group_max: Option<u64>) -> Self {
 		let group_min = group_min.unwrap_or(0);
 		let group_max = group_max.unwrap_or(0);
 
-		Self::new("subscription_update_created", MoqEventData::SubscriptionUpdateCreated(SubscribeUpdate::new(track_priority, group_order, group_expires, group_min, group_max)))
+		Self::new("subscription_update_created", MoqEventData::SubscriptionUpdateCreated(SubscribeUpdate::new(track_priority, group_order, group_min, group_max)))
 	}
 
-	pub fn subscription_update_parsed(track_priority: u64, group_order: u64, group_expires: u64, group_min: Option<u64>, group_max: Option<u64>) -> Self {
+	pub fn subscription_update_parsed(track_priority: u64, group_order: u64, group_min: Option<u64>, group_max: Option<u64>) -> Self {
 		let group_min = group_min.unwrap_or(0);
 		let group_max = group_max.unwrap_or(0);
 
-		Self::new("subscription_update_parsed", MoqEventData::SubscriptionUpdateParsed(SubscribeUpdate::new(track_priority, group_order, group_expires, group_min, group_max)))
+		Self::new("subscription_update_parsed", MoqEventData::SubscriptionUpdateParsed(SubscribeUpdate::new(track_priority, group_order, group_min, group_max)))
 	}
 
 	pub fn subscription_gap_created(group_start: u64, group_count: u64, group_error_code: u64) -> Self {
@@ -92,12 +92,12 @@ impl Event {
 		Self::new("subscription_gap_parsed", MoqEventData::SubscriptionGapParsed(SubscribeGap::new(group_start, group_count, group_error_code)))
 	}
 
-	pub fn info_created(track_priority: u64, group_latest: u64, group_order: u64, group_expires: u64) -> Self {
-		Self::new("info_created", MoqEventData::InfoCreated(Info::new(track_priority, group_latest, group_order, group_expires)))
+	pub fn info_created(track_priority: u64, group_latest: u64, group_order: u64) -> Self {
+		Self::new("info_created", MoqEventData::InfoCreated(Info::new(track_priority, group_latest, group_order)))
 	}
 
-	pub fn info_parsed(track_priority: u64, group_latest: u64, group_order: u64, group_expires: u64) -> Self {
-		Self::new("info_parsed", MoqEventData::InfoParsed(Info::new(track_priority, group_latest, group_order, group_expires)))
+	pub fn info_parsed(track_priority: u64, group_latest: u64, group_order: u64) -> Self {
+		Self::new("info_parsed", MoqEventData::InfoParsed(Info::new(track_priority, group_latest, group_order)))
 	}
 
 	pub fn info_please_created(track_path_parts: Vec<String>) -> Self {
@@ -304,14 +304,13 @@ struct Subscribe {
 	track_path_parts: Vec<String>,
 	track_priority: u64,
 	group_order: u64,
-	group_expires: u64,
 	group_min: u64,
 	group_max: u64
 }
 
 impl Subscribe {
-	fn new(subscribe_id: u64, track_path_parts: Vec<String>, track_priority: u64, group_order: u64, group_expires: u64, group_min: u64, group_max: u64) -> Self {
-		Self { subscribe_id, track_path_parts, track_priority, group_order, group_expires, group_min, group_max }
+	fn new(subscribe_id: u64, track_path_parts: Vec<String>, track_priority: u64, group_order: u64, group_min: u64, group_max: u64) -> Self {
+		Self { subscribe_id, track_path_parts, track_priority, group_order, group_min, group_max }
 	}
 }
 
@@ -319,14 +318,13 @@ impl Subscribe {
 struct SubscribeUpdate {
 	track_priority: u64,
 	group_order: u64,
-	group_expires: u64,
 	group_min: u64,
 	group_max: u64
 }
 
 impl SubscribeUpdate {
-	fn new(track_priority: u64, group_order: u64, group_expires: u64, group_min: u64, group_max: u64) -> Self {
-		Self { track_priority, group_order, group_expires, group_min, group_max }
+	fn new(track_priority: u64, group_order: u64, group_min: u64, group_max: u64) -> Self {
+		Self { track_priority, group_order, group_min, group_max }
 	}
 }
 
@@ -347,13 +345,12 @@ impl SubscribeGap {
 struct Info {
 	track_priority: u64,
 	group_latest: u64,
-	group_order: u64,
-	group_expires: u64
+	group_order: u64
 }
 
 impl Info {
-	fn new(track_priority: u64, group_latest: u64, group_order: u64, group_expires: u64) -> Self {
-		Self { track_priority, group_latest, group_order, group_expires }
+	fn new(track_priority: u64, group_latest: u64, group_order: u64) -> Self {
+		Self { track_priority, group_latest, group_order }
 	}
 }
 

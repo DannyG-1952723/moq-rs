@@ -136,8 +136,7 @@ impl Publisher {
 	pub async fn recv_subscribe(&mut self, stream: &mut Stream) -> Result<(), Error> {
 		let subscribe: message::Subscribe = stream.reader.decode().await?;
 
-		// TODO: Get the real value of 'group_expires'
-		QlogWriter::log_event(Event::subscription_started(subscribe.id, subscribe.path.to_vec(), subscribe.priority.try_into().unwrap(), subscribe.group_order as u64, 0, subscribe.group_min, subscribe.group_max));
+		QlogWriter::log_event(Event::subscription_started(subscribe.id, subscribe.path.to_vec(), subscribe.priority.try_into().unwrap(), subscribe.group_order as u64, subscribe.group_min, subscribe.group_max));
 
 		self.serve_subscribe(stream, subscribe).await
 	}
@@ -160,8 +159,7 @@ impl Publisher {
 
 		tracing::info!(?info, "active");
 
-		// TODO: Get the real value of 'group_expires'
-		QlogWriter::log_event(Event::info_created(info.track_priority.try_into().unwrap(), info.group_latest, info.group_order as u64, 0));
+		QlogWriter::log_event(Event::info_created(info.track_priority.try_into().unwrap(), info.group_latest, info.group_order as u64));
 
 		stream.writer.encode(&info).await?;
 
@@ -183,8 +181,7 @@ impl Publisher {
 					Some(update) => {
 						// TODO use it
 
-						// TODO: Get the real value of 'group_expires'
-						QlogWriter::log_event(Event::subscription_update_parsed(update.priority, update.group_order as u64, 0, update.group_min, update.group_max));
+						QlogWriter::log_event(Event::subscription_update_parsed(update.priority, update.group_order as u64, update.group_min, update.group_max));
 					},
 					// Subscribe has completed
 					None => {
@@ -322,8 +319,7 @@ impl Publisher {
 			group_order: track.order,
 		};
 
-		// TODO: Get the real value of 'group_expires'
-		QlogWriter::log_event(Event::info_created(info.track_priority.try_into().unwrap(), info.group_latest, info.group_order as u64, 0));
+		QlogWriter::log_event(Event::info_created(info.track_priority.try_into().unwrap(), info.group_latest, info.group_order as u64));
 
 		stream.writer.encode(&info).await?;
 

@@ -122,7 +122,7 @@ impl Session {
 
 	async fn run_session(mut stream: Stream) -> Result<(), Error> {
 		while let Some(info) = stream.reader.decode_maybe::<message::Info>().await? {
-			QlogWriter::log_event(Event::info_parsed(info.track_priority.try_into().unwrap(), info.group_latest, info.group_order as u64, 0));
+			QlogWriter::log_event(Event::info_parsed(info.track_priority.try_into().unwrap(), info.group_latest, info.group_order as u64));
 		}
 		Err(Error::Cancel)
 	}
