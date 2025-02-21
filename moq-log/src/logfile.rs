@@ -22,6 +22,10 @@ impl QlogFileSeq {
 #[skip_serializing_none]
 #[derive(Serialize)]
 pub struct LogFile {
+	/// For qvis compatibility
+	qlog_version: String,
+	/// For qvis compatibility
+	qlog_format: String,
 	/// Identifies the concrete log file schema
 	file_schema: String,
 	/// Indicates the serialization format using a media type
@@ -37,6 +41,8 @@ impl LogFile {
 	// TODO: Add support for other serialization formats
 	pub fn new(title: Option<String>, description: Option<String>) -> LogFile {
 		LogFile {
+			qlog_version: "draft-02".to_string(),
+			qlog_format: "JSON-SEQ".to_string(),
 			file_schema: "urn:ietf:params:qlog:file:sequential".to_string(),
 			serialization_format: "application/qlog+json-seq".to_string(),
 			title,
