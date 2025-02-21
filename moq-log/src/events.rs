@@ -233,7 +233,7 @@ struct SessionClient {
 
 impl SessionClient {
 	fn new(supported_versions: Vec<u64>, extension_ids: Option<Vec<u64>>) -> Self {
-		let extension_ids = extension_ids.unwrap_or(Vec::new());
+		let extension_ids = extension_ids.unwrap_or_default();
 
 		Self { supported_versions, extension_ids }
 	}
@@ -247,7 +247,7 @@ struct SessionServer {
 
 impl SessionServer {
 	fn new(selected_version: u64, extension_ids: Option<Vec<u64>>) -> Self {
-		let extension_ids = extension_ids.unwrap_or(Vec::new());
+		let extension_ids = extension_ids.unwrap_or_default();
 
 		Self { selected_version, extension_ids }
 	}
@@ -428,15 +428,15 @@ impl RawInfo {
 	pub fn new(length: Option<u64>, data: Option<&[u8]>) -> Self {
 		match data {
 			Some(payload) => {
-				let payload_length: Option<u64> = Some(payload.len().try_into().unwrap());
+				let payload_length: u64 = payload.len().try_into().unwrap();
 
 				// Only log the first MAX_LOG_DATA_LEN bytes
-				if payload_length.unwrap() > MAX_LOG_DATA_LEN.try_into().unwrap() {
+				if payload_length > MAX_LOG_DATA_LEN.try_into().unwrap() {
 					let truncated = &payload[..MAX_LOG_DATA_LEN];
-					return Self { length, payload_length, data: Some(bytes_to_hexstring(truncated)) };
+					return Self { length, payload_length: Some(payload_length), data: Some(bytes_to_hexstring(truncated)) };
 				}
 
-				Self { length, payload_length, data: Some(bytes_to_hexstring(payload)) }
+				Self { length, payload_length: Some(payload_length), data: Some(bytes_to_hexstring(payload)) }
 			},
 			None => Self { length, payload_length: None, data: None }
 		}

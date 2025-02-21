@@ -84,7 +84,7 @@ pub struct CommonFields {
 
 impl CommonFields {
 	pub fn new(path: Option<PathId>, time_format: Option<TimeFormat>, reference_time: Option<ReferenceTime>, protocol_types: Option<Vec<String>>, group_id: Option<GroupId>, custom_fields: Option<HashMap<String, String>>) -> CommonFields {
-		let custom_fields = custom_fields.unwrap_or(HashMap::new());
+		let custom_fields = custom_fields.unwrap_or_default();
 
 		CommonFields { path, time_format, reference_time, protocol_types, group_id, custom_fields }
 	}
@@ -114,7 +114,7 @@ pub enum TimeFormat {
 }
 
 #[skip_serializing_none]
-#[derive(Serialize)]
+#[derive(Default, Serialize)]
 pub struct ReferenceTime {
 	clock_type: ClockType,
 	epoch: Epoch,
@@ -126,20 +126,14 @@ impl ReferenceTime {
 	///
 	/// epoch defaults to "1970-01-01T00:00:00.000Z" when None
 	pub fn new(clock_type: Option<ClockType>, epoch: Option<Epoch>, wall_clock_time: Option<DateTime<FixedOffset>>) -> ReferenceTime {
-		let clock_type = clock_type.unwrap_or(ClockType::default());
-		let epoch = epoch.unwrap_or(Epoch::default());
+		let clock_type = clock_type.unwrap_or_default();
+		let epoch = epoch.unwrap_or_default();
 
 		if clock_type == ClockType::Monotonic && epoch != Epoch::Unknown {
 			panic!("When using the 'monotonic' clock type, the epoch field must have the value 'unknown'");
 		}
 
 		ReferenceTime { clock_type, epoch, wall_clock_time }
-	}
-}
-
-impl Default for ReferenceTime {
-	fn default() -> Self {
-		Self { clock_type: ClockType::default(), epoch: Epoch::default(), wall_clock_time: None }
 	}
 }
 
@@ -179,11 +173,9 @@ pub struct VantagePoint {
 
 impl VantagePoint {
 	pub fn new(name: Option<String>, vp_type: VantagePointType, flow: Option<VantagePointType>) -> VantagePoint {
-		if vp_type == VantagePointType::Network {
-			if let None = flow {
-				panic!("The 'flow' field is required if the type is 'network'");
-			}
-		}
+		if vp_type == VantagePointType::Network && flow.is_none() {
+  			panic!("The 'flow' field is required if the type is 'network'");
+  		}
 
 		VantagePoint { name, vp_type, flow }
 	}

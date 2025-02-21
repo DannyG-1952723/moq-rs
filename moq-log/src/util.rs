@@ -1,3 +1,5 @@
+use std::fmt::Write;
+
 pub const MAX_LOG_DATA_LEN: usize = 64;
 pub const VERSION_STRING: &str = "moq-transfork-03";
 
@@ -6,7 +8,10 @@ pub type GroupId = String;
 pub type HexString = String;
 
 pub fn bytes_to_hexstring(bytes: &[u8]) -> HexString {
-    bytes.iter().map(|b| format!("{:02X}", b)).collect::<String>()
+    bytes.iter().fold(String::new(), |mut output, b| {
+        let _ = write!(output, "{b:02X}");
+        output
+    })
 }
 
 pub fn is_empty_or_none(path: &Option<PathId>) -> bool {
