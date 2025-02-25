@@ -23,126 +23,126 @@ pub struct Event {
 }
 
 impl Event {
-	pub fn stream_created(stream_type: StreamType) -> Self {
-		Self::new("stream_created", MoqEventData::StreamCreated(Stream::new(stream_type)))
+	pub fn stream_created(stream_type: StreamType, tracing_id: u64) -> Self {
+		Self::new("stream_created", MoqEventData::StreamCreated(Stream::new(stream_type)), tracing_id)
 	}
 
-	pub fn stream_parsed(stream_type: StreamType) -> Self {
-		Self::new("stream_parsed", MoqEventData::StreamParsed(Stream::new(stream_type)))
+	pub fn stream_parsed(stream_type: StreamType, tracing_id: u64) -> Self {
+		Self::new("stream_parsed", MoqEventData::StreamParsed(Stream::new(stream_type)), tracing_id)
 	}
 
-	pub fn session_started_client(supported_versions: Vec<u64>, extension_ids: Option<Vec<u64>>) -> Self {
-		Self::new("session_started", MoqEventData::SessionStarted(SessionMessage::SessionClient(SessionClient::new(supported_versions, extension_ids))))
+	pub fn session_started_client(supported_versions: Vec<u64>, extension_ids: Option<Vec<u64>>, tracing_id: u64) -> Self {
+		Self::new("session_started", MoqEventData::SessionStarted(SessionMessage::SessionClient(SessionClient::new(supported_versions, extension_ids, tracing_id))), tracing_id)
 	}
 
-	pub fn session_started_server(selected_version: u64, extension_ids: Option<Vec<u64>>) -> Self {
-		Self::new("session_started", MoqEventData::SessionStarted(SessionMessage::SessionServer(SessionServer::new(selected_version, extension_ids))))
+	pub fn session_started_server(selected_version: u64, extension_ids: Option<Vec<u64>>, tracing_id: u64) -> Self {
+		Self::new("session_started", MoqEventData::SessionStarted(SessionMessage::SessionServer(SessionServer::new(selected_version, extension_ids))), tracing_id)
 	}
 
-	pub fn session_update_created(session_bitrate: u64) -> Self {
-		Self::new("session_update_created", MoqEventData::SessionUpdateCreated(SessionUpdate::new(session_bitrate)))
+	pub fn session_update_created(session_bitrate: u64, tracing_id: u64) -> Self {
+		Self::new("session_update_created", MoqEventData::SessionUpdateCreated(SessionUpdate::new(session_bitrate)), tracing_id)
 	}
 
-	pub fn session_update_parsed(session_bitrate: u64) -> Self {
-		Self::new("session_update_parsed", MoqEventData::SessionUpdateParsed(SessionUpdate::new(session_bitrate)))
+	pub fn session_update_parsed(session_bitrate: u64, tracing_id: u64) -> Self {
+		Self::new("session_update_parsed", MoqEventData::SessionUpdateParsed(SessionUpdate::new(session_bitrate)), tracing_id)
 	}
 
-	pub fn announce_please_created(track_prefix_parts: Vec<String>) -> Self {
-		Self::new("announce_please_created", MoqEventData::AnnouncePleaseCreated(AnnouncePlease::new(track_prefix_parts)))
+	pub fn announce_please_created(track_prefix_parts: Vec<String>, tracing_id: u64) -> Self {
+		Self::new("announce_please_created", MoqEventData::AnnouncePleaseCreated(AnnouncePlease::new(track_prefix_parts)), tracing_id)
 	}
 
-	pub fn announce_please_parsed(track_prefix_parts: Vec<String>) -> Self {
-		Self::new("announce_please_parsed", MoqEventData::AnnouncePleaseParsed(AnnouncePlease::new(track_prefix_parts)))
+	pub fn announce_please_parsed(track_prefix_parts: Vec<String>, tracing_id: u64) -> Self {
+		Self::new("announce_please_parsed", MoqEventData::AnnouncePleaseParsed(AnnouncePlease::new(track_prefix_parts)), tracing_id)
 	}
 
-	pub fn announce_created(announce_status: AnnounceStatus, track_suffix_parts: Vec<Vec<String>>) -> Self {
-		Self::new("announce_created", MoqEventData::AnnounceCreated(Announce::new(announce_status, track_suffix_parts)))
+	pub fn announce_created(announce_status: AnnounceStatus, track_suffix_parts: Vec<Vec<String>>, tracing_id: u64) -> Self {
+		Self::new("announce_created", MoqEventData::AnnounceCreated(Announce::new(announce_status, track_suffix_parts)), tracing_id)
 	}
 
-	pub fn announce_parsed(announce_status: AnnounceStatus, track_suffix_parts: Vec<Vec<String>>) -> Self {
-		Self::new("announce_parsed", MoqEventData::AnnounceParsed(Announce::new(announce_status, track_suffix_parts)))
+	pub fn announce_parsed(announce_status: AnnounceStatus, track_suffix_parts: Vec<Vec<String>>, tracing_id: u64) -> Self {
+		Self::new("announce_parsed", MoqEventData::AnnounceParsed(Announce::new(announce_status, track_suffix_parts)), tracing_id)
 	}
 
-	pub fn subscription_started(subscribe_id: u64, track_path_parts: Vec<String>, track_priority: u64, group_order: u64, group_min: Option<u64>, group_max: Option<u64>) -> Self {
+	pub fn subscription_started(subscribe_id: u64, track_path_parts: Vec<String>, track_priority: u64, group_order: u64, group_min: Option<u64>, group_max: Option<u64>, tracing_id: u64) -> Self {
 		let group_min = group_min.unwrap_or(0);
 		let group_max = group_max.unwrap_or(0);
 
-		Self::new("subscription_started", MoqEventData::SubscriptionStarted(Subscribe::new(subscribe_id, track_path_parts, track_priority, group_order, group_min, group_max)))
+		Self::new("subscription_started", MoqEventData::SubscriptionStarted(Subscribe::new(subscribe_id, track_path_parts, track_priority, group_order, group_min, group_max)), tracing_id)
 	}
 
-	pub fn subscription_update_created(track_priority: u64, group_order: u64, group_min: Option<u64>, group_max: Option<u64>) -> Self {
+	pub fn subscription_update_created(track_priority: u64, group_order: u64, group_min: Option<u64>, group_max: Option<u64>, tracing_id: u64) -> Self {
 		let group_min = group_min.unwrap_or(0);
 		let group_max = group_max.unwrap_or(0);
 
-		Self::new("subscription_update_created", MoqEventData::SubscriptionUpdateCreated(SubscribeUpdate::new(track_priority, group_order, group_min, group_max)))
+		Self::new("subscription_update_created", MoqEventData::SubscriptionUpdateCreated(SubscribeUpdate::new(track_priority, group_order, group_min, group_max)), tracing_id)
 	}
 
-	pub fn subscription_update_parsed(track_priority: u64, group_order: u64, group_min: Option<u64>, group_max: Option<u64>) -> Self {
+	pub fn subscription_update_parsed(track_priority: u64, group_order: u64, group_min: Option<u64>, group_max: Option<u64>, tracing_id: u64) -> Self {
 		let group_min = group_min.unwrap_or(0);
 		let group_max = group_max.unwrap_or(0);
 
-		Self::new("subscription_update_parsed", MoqEventData::SubscriptionUpdateParsed(SubscribeUpdate::new(track_priority, group_order, group_min, group_max)))
+		Self::new("subscription_update_parsed", MoqEventData::SubscriptionUpdateParsed(SubscribeUpdate::new(track_priority, group_order, group_min, group_max)), tracing_id)
 	}
 
-	pub fn subscription_gap_created(group_start: u64, group_count: u64, group_error_code: u64) -> Self {
-		Self::new("subscription_gap_created", MoqEventData::SubscriptionGapCreated(SubscribeGap::new(group_start, group_count, group_error_code)))
+	pub fn subscription_gap_created(group_start: u64, group_count: u64, group_error_code: u64, tracing_id: u64) -> Self {
+		Self::new("subscription_gap_created", MoqEventData::SubscriptionGapCreated(SubscribeGap::new(group_start, group_count, group_error_code)), tracing_id)
 	}
 
-	pub fn subscription_gap_parsed(group_start: u64, group_count: u64, group_error_code: u64) -> Self {
-		Self::new("subscription_gap_parsed", MoqEventData::SubscriptionGapParsed(SubscribeGap::new(group_start, group_count, group_error_code)))
+	pub fn subscription_gap_parsed(group_start: u64, group_count: u64, group_error_code: u64, tracing_id: u64) -> Self {
+		Self::new("subscription_gap_parsed", MoqEventData::SubscriptionGapParsed(SubscribeGap::new(group_start, group_count, group_error_code)), tracing_id)
 	}
 
-	pub fn info_created(track_priority: u64, group_latest: u64, group_order: u64) -> Self {
-		Self::new("info_created", MoqEventData::InfoCreated(Info::new(track_priority, group_latest, group_order)))
+	pub fn info_created(track_priority: u64, group_latest: u64, group_order: u64, tracing_id: u64) -> Self {
+		Self::new("info_created", MoqEventData::InfoCreated(Info::new(track_priority, group_latest, group_order)), tracing_id)
 	}
 
-	pub fn info_parsed(track_priority: u64, group_latest: u64, group_order: u64) -> Self {
-		Self::new("info_parsed", MoqEventData::InfoParsed(Info::new(track_priority, group_latest, group_order)))
+	pub fn info_parsed(track_priority: u64, group_latest: u64, group_order: u64, tracing_id: u64) -> Self {
+		Self::new("info_parsed", MoqEventData::InfoParsed(Info::new(track_priority, group_latest, group_order)), tracing_id)
 	}
 
-	pub fn info_please_created(track_path_parts: Vec<String>) -> Self {
-		Self::new("info_please_created", MoqEventData::InfoPleaseCreated(InfoPlease::new(track_path_parts)))
+	pub fn info_please_created(track_path_parts: Vec<String>, tracing_id: u64) -> Self {
+		Self::new("info_please_created", MoqEventData::InfoPleaseCreated(InfoPlease::new(track_path_parts)), tracing_id)
 	}
 
-	pub fn info_please_parsed(track_path_parts: Vec<String>) -> Self {
-		Self::new("info_please_parsed", MoqEventData::InfoPleaseParsed(InfoPlease::new(track_path_parts)))
+	pub fn info_please_parsed(track_path_parts: Vec<String>, tracing_id: u64) -> Self {
+		Self::new("info_please_parsed", MoqEventData::InfoPleaseParsed(InfoPlease::new(track_path_parts)), tracing_id)
 	}
 
-	pub fn fetch_created(track_path_parts: Vec<String>, track_priority: u64, group_sequence: u64, frame_sequence: u64) -> Self {
-		Self::new("fetch_created", MoqEventData::FetchCreated(Fetch::new(track_path_parts, track_priority, group_sequence, frame_sequence)))
+	pub fn fetch_created(track_path_parts: Vec<String>, track_priority: u64, group_sequence: u64, frame_sequence: u64, tracing_id: u64) -> Self {
+		Self::new("fetch_created", MoqEventData::FetchCreated(Fetch::new(track_path_parts, track_priority, group_sequence, frame_sequence)), tracing_id)
 	}
 
-	pub fn fetch_parsed(track_path_parts: Vec<String>, track_priority: u64, group_sequence: u64, frame_sequence: u64) -> Self {
-		Self::new("fetch_parsed", MoqEventData::FetchParsed(Fetch::new(track_path_parts, track_priority, group_sequence, frame_sequence)))
+	pub fn fetch_parsed(track_path_parts: Vec<String>, track_priority: u64, group_sequence: u64, frame_sequence: u64, tracing_id: u64) -> Self {
+		Self::new("fetch_parsed", MoqEventData::FetchParsed(Fetch::new(track_path_parts, track_priority, group_sequence, frame_sequence)), tracing_id)
 	}
 
-	pub fn fetch_update_created(track_priority: u64) -> Self {
-		Self::new("fetch_update_created", MoqEventData::FetchUpdateCreated(FetchUpdate::new(track_priority)))
+	pub fn fetch_update_created(track_priority: u64, tracing_id: u64) -> Self {
+		Self::new("fetch_update_created", MoqEventData::FetchUpdateCreated(FetchUpdate::new(track_priority)), tracing_id)
 	}
 
-	pub fn fetch_update_parsed(track_priority: u64) -> Self {
-		Self::new("fetch_update_parsed", MoqEventData::FetchUpdateParsed(FetchUpdate::new(track_priority)))
+	pub fn fetch_update_parsed(track_priority: u64, tracing_id: u64) -> Self {
+		Self::new("fetch_update_parsed", MoqEventData::FetchUpdateParsed(FetchUpdate::new(track_priority)), tracing_id)
 	}
 
-	pub fn group_created(subscribe_id: u64, group_sequence: u64) -> Self {
-		Self::new("group_created", MoqEventData::GroupCreated(Group::new(subscribe_id, group_sequence)))
+	pub fn group_created(subscribe_id: u64, group_sequence: u64, tracing_id: u64) -> Self {
+		Self::new("group_created", MoqEventData::GroupCreated(Group::new(subscribe_id, group_sequence)), tracing_id)
 	}
 
-	pub fn group_parsed(subscribe_id: u64, group_sequence: u64) -> Self {
-		Self::new("group_parsed", MoqEventData::GroupParsed(Group::new(subscribe_id, group_sequence)))
+	pub fn group_parsed(subscribe_id: u64, group_sequence: u64, tracing_id: u64) -> Self {
+		Self::new("group_parsed", MoqEventData::GroupParsed(Group::new(subscribe_id, group_sequence)), tracing_id)
 	}
 
-	pub fn frame_created(payload_length: Option<u64>, payload: Option<&[u8]>) -> Self {
-		Self::new("frame_created", MoqEventData::FrameCreated(Frame::new(RawInfo::new(payload_length, payload))))
+	pub fn frame_created(payload_length: Option<u64>, payload: Option<&[u8]>, tracing_id: u64) -> Self {
+		Self::new("frame_created", MoqEventData::FrameCreated(Frame::new(RawInfo::new(payload_length, payload))), tracing_id)
 	}
 
-	pub fn frame_parsed(payload_length: Option<u64>, payload: Option<&[u8]>) -> Self {
-		Self::new("frame_parsed", MoqEventData::FrameParsed(Frame::new(RawInfo::new(payload_length, payload))))
+	pub fn frame_parsed(payload_length: Option<u64>, payload: Option<&[u8]>, tracing_id: u64) -> Self {
+		Self::new("frame_parsed", MoqEventData::FrameParsed(Frame::new(RawInfo::new(payload_length, payload))), tracing_id)
 	}
 
 	// Assumes default TimeFormat (relative to epoch, epoch = "1970-01-01T00:00:00.000Z")
 	// TODO: Base 'time' value upon chosen TimeFormat
-	fn new(event_name: &str, event_data: MoqEventData) -> Self {
+	fn new(event_name: &str, event_data: MoqEventData, group_id: u64) -> Self {
 		Self {
 			time: Utc::now().timestamp_millis(),
 			name: format!("{VERSION_STRING}:{event_name}"),
@@ -151,8 +151,7 @@ impl Event {
 			path: Some("".to_string()),
 			time_format: None,
 			protocol_types: None,
-			// TODO: Maybe add a group ID
-			group_id: None,
+			group_id: Some(group_id.to_string()),
 			system_info: None,
 			custom_fields: HashMap::new()
 		}
@@ -228,14 +227,15 @@ enum SessionMessage {
 #[derive(Serialize)]
 struct SessionClient {
 	supported_versions: Vec<u64>,
-	extension_ids: Vec<u64>
+	extension_ids: Vec<u64>,
+	tracing_id: u64
 }
 
 impl SessionClient {
-	fn new(supported_versions: Vec<u64>, extension_ids: Option<Vec<u64>>) -> Self {
+	fn new(supported_versions: Vec<u64>, extension_ids: Option<Vec<u64>>, tracing_id: u64) -> Self {
 		let extension_ids = extension_ids.unwrap_or_default();
 
-		Self { supported_versions, extension_ids }
+		Self { supported_versions, extension_ids, tracing_id }
 	}
 }
 

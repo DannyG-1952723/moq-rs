@@ -9,10 +9,10 @@ pub(super) struct Stream {
 }
 
 impl Stream {
-	pub async fn open(session: &mut web_transport::Session, typ: message::ControlType) -> Result<Self, Error> {
+	pub async fn open(session: &mut web_transport::Session, typ: message::ControlType, tracing_id: u64) -> Result<Self, Error> {
 		let (send, recv) = session.open_bi().await?;
 
-		QlogWriter::log_event(Event::stream_created(typ.to_log_type()));
+		QlogWriter::log_event(Event::stream_created(typ.to_log_type(), tracing_id));
 
 		let mut writer = Writer::new(send);
 		let reader = Reader::new(recv);

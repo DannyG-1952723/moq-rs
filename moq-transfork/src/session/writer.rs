@@ -18,10 +18,10 @@ impl Writer {
 		}
 	}
 
-	pub async fn open(session: &mut web_transport::Session, typ: message::DataType) -> Result<Self, Error> {
+	pub async fn open(session: &mut web_transport::Session, typ: message::DataType, tracing_id: u64) -> Result<Self, Error> {
 		let send = session.open_uni().await?;
 
-		QlogWriter::log_event(Event::stream_created(typ.to_log_type()));
+		QlogWriter::log_event(Event::stream_created(typ.to_log_type(), tracing_id));
 
 		let mut writer = Self::new(send);
 		writer.encode(&typ).await?;

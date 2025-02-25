@@ -9,6 +9,9 @@ pub struct ClientSetup {
 
 	/// Extensions.
 	pub extensions: Extensions,
+
+	/// Random ID that's the same on both endpoints, useful for logging
+	pub tracing_id: u64
 }
 
 impl Decode for ClientSetup {
@@ -16,8 +19,9 @@ impl Decode for ClientSetup {
 	fn decode<R: bytes::Buf>(r: &mut R) -> Result<Self, DecodeError> {
 		let versions = Versions::decode(r)?;
 		let extensions = Extensions::decode(r)?;
+		let tracing_id = u64::decode(r)?;
 
-		Ok(Self { versions, extensions })
+		Ok(Self { versions, extensions, tracing_id })
 	}
 }
 
@@ -26,6 +30,7 @@ impl Encode for ClientSetup {
 	fn encode<W: bytes::BufMut>(&self, w: &mut W) {
 		self.versions.encode(w);
 		self.extensions.encode(w);
+		self.tracing_id.encode(w);
 	}
 }
 

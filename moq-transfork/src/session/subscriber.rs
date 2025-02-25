@@ -35,13 +35,13 @@ impl Subscriber {
 	}
 
 	/// Discover any tracks matching a prefix.
-	pub fn announced(&self, prefix: Path) -> AnnouncedConsumer {
+	pub fn announced(&self, prefix: Path, tracing_id: u64) -> AnnouncedConsumer {
 		let producer = AnnouncedProducer::default();
 		let consumer = producer.subscribe_prefix(prefix.clone());
 
 		let mut session = self.session.clone();
 		spawn(async move {
-			let mut stream = match Stream::open(&mut session, message::ControlType::Announce).await {
+			let mut stream = match Stream::open(&mut session, message::ControlType::Announce, tracing_id).await {
 				Ok(stream) => stream,
 				Err(err) => {
 					tracing::warn!(?err, "failed to open announce stream");
@@ -49,7 +49,7 @@ impl Subscriber {
 				}
 			};
 
-			if let Err(err) = Self::run_announce(&mut stream, prefix, producer)
+			if let Err(err) = Self::run_announce(&mut stream, prefix, producer, tracing_id)
 				.await
 				.or_close(&mut stream)
 			{
@@ -60,10 +60,10 @@ impl Subscriber {
 		consumer
 	}
 
-	async fn run_announce(stream: &mut Stream, prefix: Path, mut announced: AnnouncedProducer) -> Result<(), Error> {
+	async fn run_announce(stream: &mut Stream, prefix: Path, mut announced: AnnouncedProducer, tracing_id: u64) -> Result<(), Error> {
 		let msg = message::AnnouncePlease { prefix: prefix.clone() };
 
-		QlogWriter::log_event(Event::announce_please_created(msg.prefix.to_vec()));
+		QlogWriter::log_event(Event::announce_please_created(msg.prefix.to_vec(), tracing_id));
 
 		stream.writer.encode(&msg).await?;
 
@@ -74,7 +74,7 @@ impl Subscriber {
 				res = stream.reader.decode_maybe::<message::Announce>() => {
 					match res? {
 						// Handle the announce
-						Some(announce) => Self::recv_announce(announce, &prefix, &mut announced)?,
+						Some(announce) => Self::recv_announce(announce, &prefix, &mut announced, tracing_id)?,
 						// Stop if the stream has been closed
 						None => return Ok(()),
 					}
@@ -89,6 +89,7 @@ impl Subscriber {
 		announce: message::Announce,
 		prefix: &Path,
 		announced: &mut AnnouncedProducer,
+		tracing_id: u64
 	) -> Result<(), Error> {
 		match announce {
 			message::Announce::Active { suffix } => {
@@ -99,7 +100,7 @@ impl Subscriber {
 				}
 
 				// TODO: Check if this is right
-				QlogWriter::log_event(Event::announce_parsed(AnnounceStatus::Active, vec![suffix.to_vec()]));
+				QlogWriter::log_event(Event::announce_parsed(AnnounceStatus::Active, vec![suffix.to_vec()], tracing_id));
 			}
 			message::Announce::Ended { suffix } => {
 				let path = prefix.clone().append(&suffix);
@@ -109,11 +110,11 @@ impl Subscriber {
 				}
 
 				// TODO: Check if this is right
-				QlogWriter::log_event(Event::announce_parsed(AnnounceStatus::Ended, vec![suffix.to_vec()]));
+				QlogWriter::log_event(Event::announce_parsed(AnnounceStatus::Ended, vec![suffix.to_vec()], tracing_id));
 			}
 			message::Announce::Live => {
 				// TODO: Check if this is right
-				QlogWriter::log_event(Event::announce_parsed(AnnounceStatus::Live, vec![]));
+				QlogWriter::log_event(Event::announce_parsed(AnnounceStatus::Live, vec![], tracing_id));
 				announced.live();
 			}
 		};
@@ -122,7 +123,7 @@ impl Subscriber {
 	}
 
 	/// Subscribe to a given track.
-	pub fn subscribe(&self, track: Track) -> TrackConsumer {
+	pub fn subscribe(&self, track: Track, tracing_id: u64) -> TrackConsumer {
 		let path = track.path.clone();
 		let (writer, reader) = track.clone().produce();
 
@@ -136,8 +137,8 @@ impl Subscriber {
 		let id = self.next_id.fetch_add(1, atomic::Ordering::Relaxed);
 
 		spawn(async move {
-			if let Ok(mut stream) = Stream::open(&mut this.session, message::ControlType::Subscribe).await {
-				if let Err(err) = this.run_subscribe(id, writer, &mut stream).await.or_close(&mut stream) {
+			if let Ok(mut stream) = Stream::open(&mut this.session, message::ControlType::Subscribe, tracing_id).await {
+				if let Err(err) = this.run_subscribe(id, writer, &mut stream, tracing_id).await.or_close(&mut stream) {
 					tracing::warn!(?err, "subscribe error");
 				}
 			}
@@ -150,7 +151,7 @@ impl Subscriber {
 	}
 
 	#[tracing::instrument("subscribe", skip_all, fields(?id, track = ?track.path))]
-	async fn run_subscribe(&mut self, id: u64, track: TrackProducer, stream: &mut Stream) -> Result<(), Error> {
+	async fn run_subscribe(&mut self, id: u64, track: TrackProducer, stream: &mut Stream, tracing_id: u64) -> Result<(), Error> {
 		self.subscribes.lock().insert(id, track.clone());
 
 		let request = message::Subscribe {
@@ -165,14 +166,14 @@ impl Subscriber {
 			group_max: None,
 		};
 
-		QlogWriter::log_event(Event::subscription_started(request.id, request.path.to_vec(), request.priority.try_into().unwrap(), request.group_order as u64, request.group_min, request.group_max));
+		QlogWriter::log_event(Event::subscription_started(request.id, request.path.to_vec(), request.priority.try_into().unwrap(), request.group_order as u64, request.group_min, request.group_max, tracing_id));
 
 		stream.writer.encode(&request).await?;
 
 		// TODO use the response to correctly populate the track info
 		let info: message::Info = stream.reader.decode().await?;
 
-		QlogWriter::log_event(Event::info_parsed(info.track_priority.try_into().unwrap(), info.group_latest, info.group_order as u64));
+		QlogWriter::log_event(Event::info_parsed(info.track_priority.try_into().unwrap(), info.group_latest, info.group_order as u64, tracing_id));
 
 		tracing::info!(?info, "active");
 
@@ -199,16 +200,16 @@ impl Subscriber {
 		Ok(())
 	}
 
-	pub async fn recv_group(&mut self, stream: &mut Reader) -> Result<(), Error> {
+	pub async fn recv_group(&mut self, stream: &mut Reader, tracing_id: u64) -> Result<(), Error> {
 		let group: message::Group = stream.decode().await?;
 
-		QlogWriter::log_event(Event::group_parsed(group.subscribe, group.sequence));
+		QlogWriter::log_event(Event::group_parsed(group.subscribe, group.sequence, tracing_id));
 
-		self.recv_group_inner(stream, group).await.or_close(stream)
+		self.recv_group_inner(stream, group, tracing_id).await.or_close(stream)
 	}
 
 	#[tracing::instrument("group", skip_all, err, fields(subscribe = ?group.subscribe, group = group.sequence))]
-	pub async fn recv_group_inner(&mut self, stream: &mut Reader, group: message::Group) -> Result<(), Error> {
+	pub async fn recv_group_inner(&mut self, stream: &mut Reader, group: message::Group, tracing_id: u64) -> Result<(), Error> {
 		let mut group = {
 			let mut subs = self.subscribes.lock();
 			let track = subs.get_mut(&group.subscribe).ok_or(Error::Cancel)?;
@@ -230,7 +231,7 @@ impl Subscriber {
 			}
 
 			// TODO: Maybe add the payload
-			QlogWriter::log_event(Event::frame_parsed(Some(frame.size.try_into().unwrap()), None));
+			QlogWriter::log_event(Event::frame_parsed(Some(frame.size.try_into().unwrap()), None, tracing_id));
 		}
 
 		Ok(())
