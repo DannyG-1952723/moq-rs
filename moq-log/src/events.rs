@@ -156,6 +156,29 @@ impl Event {
 			custom_fields: HashMap::new()
 		}
 	}
+
+	pub fn get_name(&self) -> &String {
+		&self.name
+	}
+
+	pub fn get_group_id(&self) -> Option<&String> {
+		self.group_id.as_ref()
+	}
+
+	pub fn get_stream_type(&self) -> Option<&StreamType> {
+		match &self.data {
+			ProtocolEventData::MoqEventData(moq_event) => match moq_event {
+				MoqEventData::StreamCreated(stream) | MoqEventData::StreamParsed(stream) => {
+					Some(&stream.stream_type)
+				}
+				_ => None
+			}
+		}
+	}
+
+	pub fn set_group_id(&mut self, group_id: Option<&String>) {
+		self.group_id = group_id.cloned();
+	}
 }
 
 #[derive(Serialize)]
@@ -206,7 +229,7 @@ impl Stream {
 	}
 }
 
-#[derive(Serialize)]
+#[derive(PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum StreamType {
 	Session,
