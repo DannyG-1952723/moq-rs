@@ -33,7 +33,7 @@ all:
 
 # Run a localhost relay server
 relay:
-	QLOGFILE="../logs/relay.sqlog" cargo run --bin moq-relay -- --bind "[::]:4443" --tls-self-sign "localhost:4443" --cluster-node "localhost:4443" --tls-disable-verify --dev
+	QLOGFILE="../logs/2_relay.sqlog" cargo run --bin moq-relay -- --bind "[::]:4443" --tls-self-sign "localhost:4443" --cluster-node "localhost:4443" --tls-disable-verify --dev
 
 # Run a localhost leaf server, connecting to the relay server
 leaf:
@@ -81,11 +81,11 @@ web:
 
 # Publish the clock broadcast
 clock-pub:
-	QLOGFILE="../logs/clock_pub.sqlog" cargo run --bin moq-clock -- "http://localhost:4443" publish
+	QLOGFILE="../logs/1_clock_pub.sqlog" cargo run --bin moq-clock -- "http://localhost:4443" publish
 
 # Subscribe to the clock broadcast
 clock-sub:
-	QLOGFILE="../logs/clock_sub.sqlog" cargo run --bin moq-clock -- "http://localhost:4443" subscribe
+	QLOGFILE="../logs/3_clock_sub.sqlog" cargo run --bin moq-clock -- "http://localhost:4443" subscribe
 
 # Run the CI checks
 check:

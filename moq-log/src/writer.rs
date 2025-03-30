@@ -52,7 +52,7 @@ impl QlogWriter {
 			panic!("Log the qlog file details before logging events, call 'QlogWriter::log_file_details()' somewhere in the beginning of the program");
 		}
 
-		let is_session_started_event = Self::is_session_started(&event);
+		let is_session_started_event = event.is_session_started_client();
 		let mut session_stream_event_option: Option<Event> = None;
 
 		if is_session_started_event {
@@ -87,10 +87,6 @@ impl QlogWriter {
 		}
 
 		event.get_stream_type().is_some_and(|stream_type| *stream_type == StreamType::Session)
-	}
-
-	fn is_session_started(event: &Event) -> bool {
-		event.get_name() == "moq-transfork-03:session_started"
 	}
 
 	// TODO: Maybe add more error handling

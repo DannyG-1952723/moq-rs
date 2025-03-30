@@ -72,12 +72,12 @@ impl Session {
 		};
 
 		let versions: Vec<u64> = client.versions.iter().map(|&v| v.into()).collect();
-		QlogWriter::log_event(Event::session_started_client(versions, Some(client.extensions.keys()), client.tracing_id));
+		QlogWriter::log_event(Event::session_started_client_created(versions, Some(client.extensions.keys()), client.tracing_id));
 
 		setup.writer.encode(&client).await?;
 		let server: message::ServerSetup = setup.reader.decode().await?;
 
-		QlogWriter::log_event(Event::session_started_server(server.version.into(), Some(server.extensions.keys()), client.tracing_id));
+		QlogWriter::log_event(Event::session_started_server_parsed(server.version.into(), Some(server.extensions.keys()), client.tracing_id));
 
 		tracing::info!(version = ?server.version, "connected");
 
@@ -105,7 +105,7 @@ impl Session {
 		let client: message::ClientSetup = control.reader.decode().await?;
 
 		let versions: Vec<u64> = client.versions.iter().map(|&v| v.into()).collect();
-		QlogWriter::log_event(Event::session_started_client(versions, Some(client.extensions.keys()), client.tracing_id));
+		QlogWriter::log_event(Event::session_started_client_parsed(versions, Some(client.extensions.keys()), client.tracing_id));
 
 		if !client.versions.contains(&message::Version::CURRENT) {
 			return Err(Error::Version(client.versions, [message::Version::CURRENT].into()));
@@ -116,7 +116,7 @@ impl Session {
 			extensions: Default::default(),
 		};
 
-		QlogWriter::log_event(Event::session_started_server(server.version.into(), Some(server.extensions.keys()), client.tracing_id));
+		QlogWriter::log_event(Event::session_started_server_created(server.version.into(), Some(server.extensions.keys()), client.tracing_id));
 
 		control.writer.encode(&server).await?;
 

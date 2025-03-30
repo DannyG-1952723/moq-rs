@@ -166,7 +166,7 @@ impl Subscriber {
 			group_max: None,
 		};
 
-		QlogWriter::log_event(Event::subscription_started(request.id, request.path.to_vec(), request.priority.try_into().unwrap(), request.group_order as u64, request.group_min, request.group_max, tracing_id));
+		QlogWriter::log_event(Event::subscription_started_created(request.id, request.path.to_vec(), request.priority.try_into().unwrap(), request.group_order as u64, request.group_min, request.group_max, tracing_id));
 
 		stream.writer.encode(&request).await?;
 

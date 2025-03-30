@@ -136,7 +136,7 @@ impl Publisher {
 	pub async fn recv_subscribe(&mut self, stream: &mut Stream, tracing_id: u64) -> Result<(), Error> {
 		let subscribe: message::Subscribe = stream.reader.decode().await?;
 
-		QlogWriter::log_event(Event::subscription_started(subscribe.id, subscribe.path.to_vec(), subscribe.priority.try_into().unwrap(), subscribe.group_order as u64, subscribe.group_min, subscribe.group_max, tracing_id));
+		QlogWriter::log_event(Event::subscription_started_parsed(subscribe.id, subscribe.path.to_vec(), subscribe.priority.try_into().unwrap(), subscribe.group_order as u64, subscribe.group_min, subscribe.group_max, tracing_id));
 
 		self.serve_subscribe(stream, subscribe, tracing_id).await
 	}

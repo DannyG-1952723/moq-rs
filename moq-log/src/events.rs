@@ -31,12 +31,20 @@ impl Event {
 		Self::new("stream_parsed", MoqEventData::StreamParsed(Stream::new(stream_type)), tracing_id)
 	}
 
-	pub fn session_started_client(supported_versions: Vec<u64>, extension_ids: Option<Vec<u64>>, tracing_id: u64) -> Self {
-		Self::new("session_started", MoqEventData::SessionStarted(SessionMessage::SessionClient(SessionClient::new(supported_versions, extension_ids, tracing_id))), tracing_id)
+	pub fn session_started_client_created(supported_versions: Vec<u64>, extension_ids: Option<Vec<u64>>, tracing_id: u64) -> Self {
+		Self::new("session_started_created", MoqEventData::SessionStarted(SessionMessage::SessionClient(SessionClient::new(supported_versions, extension_ids, tracing_id))), tracing_id)
 	}
 
-	pub fn session_started_server(selected_version: u64, extension_ids: Option<Vec<u64>>, tracing_id: u64) -> Self {
-		Self::new("session_started", MoqEventData::SessionStarted(SessionMessage::SessionServer(SessionServer::new(selected_version, extension_ids))), tracing_id)
+	pub fn session_started_client_parsed(supported_versions: Vec<u64>, extension_ids: Option<Vec<u64>>, tracing_id: u64) -> Self {
+		Self::new("session_started_parsed", MoqEventData::SessionStarted(SessionMessage::SessionClient(SessionClient::new(supported_versions, extension_ids, tracing_id))), tracing_id)
+	}
+
+	pub fn session_started_server_created(selected_version: u64, extension_ids: Option<Vec<u64>>, tracing_id: u64) -> Self {
+		Self::new("session_started_created", MoqEventData::SessionStarted(SessionMessage::SessionServer(SessionServer::new(selected_version, extension_ids))), tracing_id)
+	}
+
+	pub fn session_started_server_parsed(selected_version: u64, extension_ids: Option<Vec<u64>>, tracing_id: u64) -> Self {
+		Self::new("session_started_parsed", MoqEventData::SessionStarted(SessionMessage::SessionServer(SessionServer::new(selected_version, extension_ids))), tracing_id)
 	}
 
 	pub fn session_update_created(session_bitrate: u64, tracing_id: u64) -> Self {
@@ -63,11 +71,18 @@ impl Event {
 		Self::new("announce_parsed", MoqEventData::AnnounceParsed(Announce::new(announce_status, track_suffix_parts)), tracing_id)
 	}
 
-	pub fn subscription_started(subscribe_id: u64, track_path_parts: Vec<String>, track_priority: u64, group_order: u64, group_min: Option<u64>, group_max: Option<u64>, tracing_id: u64) -> Self {
+	pub fn subscription_started_created(subscribe_id: u64, track_path_parts: Vec<String>, track_priority: u64, group_order: u64, group_min: Option<u64>, group_max: Option<u64>, tracing_id: u64) -> Self {
 		let group_min = group_min.unwrap_or(0);
 		let group_max = group_max.unwrap_or(0);
 
-		Self::new("subscription_started", MoqEventData::SubscriptionStarted(Subscribe::new(subscribe_id, track_path_parts, track_priority, group_order, group_min, group_max)), tracing_id)
+		Self::new("subscription_started_created", MoqEventData::SubscriptionStarted(Subscribe::new(subscribe_id, track_path_parts, track_priority, group_order, group_min, group_max)), tracing_id)
+	}
+
+	pub fn subscription_started_parsed(subscribe_id: u64, track_path_parts: Vec<String>, track_priority: u64, group_order: u64, group_min: Option<u64>, group_max: Option<u64>, tracing_id: u64) -> Self {
+		let group_min = group_min.unwrap_or(0);
+		let group_max = group_max.unwrap_or(0);
+
+		Self::new("subscription_started_parsed", MoqEventData::SubscriptionStarted(Subscribe::new(subscribe_id, track_path_parts, track_priority, group_order, group_min, group_max)), tracing_id)
 	}
 
 	pub fn subscription_update_created(track_priority: u64, group_order: u64, group_min: Option<u64>, group_max: Option<u64>, tracing_id: u64) -> Self {
@@ -172,6 +187,20 @@ impl Event {
 					Some(&stream.stream_type)
 				}
 				_ => None
+			}
+		}
+	}
+
+	pub fn is_session_started_client(&self) -> bool {
+		match &self.data {
+			ProtocolEventData::MoqEventData(moq_event) => match moq_event {
+				MoqEventData::SessionStarted(session_message) => match session_message {
+					SessionMessage::SessionClient(_) => {
+						true
+					}
+					_ => false
+				}
+				_ => false
 			}
 		}
 	}
