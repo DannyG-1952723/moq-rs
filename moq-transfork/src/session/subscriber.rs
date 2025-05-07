@@ -10,7 +10,7 @@ use crate::{
 };
 
 use moq_async::{spawn, Lock, OrClose};
-use moq_log::{events::{AnnounceStatus, Event}, writer::QlogWriter};
+use qlog_rs::{events::Event, moq_transfork::data::AnnounceStatus, writer::QlogWriter};
 
 use super::{AnnouncedConsumer, Reader, Stream};
 
@@ -63,7 +63,7 @@ impl Subscriber {
 	async fn run_announce(stream: &mut Stream, prefix: Path, mut announced: AnnouncedProducer, tracing_id: u64) -> Result<(), Error> {
 		let msg = message::AnnouncePlease { prefix: prefix.clone() };
 
-		QlogWriter::log_event(Event::announce_please_created(msg.prefix.to_vec(), tracing_id));
+		QlogWriter::log_event(Event::moq_announce_please_created(msg.prefix.to_vec(), tracing_id));
 
 		stream.writer.encode(&msg).await?;
 
@@ -100,7 +100,7 @@ impl Subscriber {
 				}
 
 				// TODO: Check if this is right
-				QlogWriter::log_event(Event::announce_parsed(AnnounceStatus::Active, vec![suffix.to_vec()], tracing_id));
+				QlogWriter::log_event(Event::moq_announce_parsed(AnnounceStatus::Active, vec![suffix.to_vec()], tracing_id));
 			}
 			message::Announce::Ended { suffix } => {
 				let path = prefix.clone().append(&suffix);
@@ -110,11 +110,11 @@ impl Subscriber {
 				}
 
 				// TODO: Check if this is right
-				QlogWriter::log_event(Event::announce_parsed(AnnounceStatus::Ended, vec![suffix.to_vec()], tracing_id));
+				QlogWriter::log_event(Event::moq_announce_parsed(AnnounceStatus::Ended, vec![suffix.to_vec()], tracing_id));
 			}
 			message::Announce::Live => {
 				// TODO: Check if this is right
-				QlogWriter::log_event(Event::announce_parsed(AnnounceStatus::Live, vec![], tracing_id));
+				QlogWriter::log_event(Event::moq_announce_parsed(AnnounceStatus::Live, vec![], tracing_id));
 				announced.live();
 			}
 		};
@@ -166,14 +166,14 @@ impl Subscriber {
 			group_max: None,
 		};
 
-		QlogWriter::log_event(Event::subscription_started_created(request.id, request.path.to_vec(), request.priority.try_into().unwrap(), request.group_order as u64, request.group_min, request.group_max, tracing_id));
+		QlogWriter::log_event(Event::moq_subscription_started_created(request.id, request.path.to_vec(), request.priority.try_into().unwrap(), request.group_order as u64, request.group_min, request.group_max, tracing_id));
 
 		stream.writer.encode(&request).await?;
 
 		// TODO use the response to correctly populate the track info
 		let info: message::Info = stream.reader.decode().await?;
 
-		QlogWriter::log_event(Event::info_parsed(info.track_priority.try_into().unwrap(), info.group_latest, info.group_order as u64, tracing_id));
+		QlogWriter::log_event(Event::moq_info_parsed(info.track_priority.try_into().unwrap(), info.group_latest, info.group_order as u64, tracing_id));
 
 		tracing::info!(?info, "active");
 
@@ -203,7 +203,7 @@ impl Subscriber {
 	pub async fn recv_group(&mut self, stream: &mut Reader, tracing_id: u64) -> Result<(), Error> {
 		let group: message::Group = stream.decode().await?;
 
-		QlogWriter::log_event(Event::group_parsed(group.subscribe, group.sequence, tracing_id));
+		QlogWriter::log_event(Event::moq_group_parsed(group.subscribe, group.sequence, tracing_id));
 
 		self.recv_group_inner(stream, group, tracing_id).await.or_close(stream)
 	}
@@ -231,7 +231,7 @@ impl Subscriber {
 			}
 
 			// TODO: Maybe add the payload
-			QlogWriter::log_event(Event::frame_parsed(Some(frame.size.try_into().unwrap()), None, tracing_id));
+			QlogWriter::log_event(Event::moq_frame_parsed(Some(frame.size.try_into().unwrap()), None, tracing_id));
 		}
 
 		Ok(())

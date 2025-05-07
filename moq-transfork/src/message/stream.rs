@@ -1,4 +1,4 @@
-use moq_log::events::StreamType;
+use qlog_rs::moq_transfork::data::StreamType;
 
 use crate::coding::*;
 

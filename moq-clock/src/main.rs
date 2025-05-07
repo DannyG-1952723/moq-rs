@@ -1,4 +1,4 @@
-use moq_log::{writer::QlogWriter, logfile::{VantagePoint, VantagePointType}};
+use qlog_rs::{writer::QlogWriter, logfile::{VantagePoint, VantagePointType}};
 use moq_native::quic;
 use std::net;
 use url::Url;

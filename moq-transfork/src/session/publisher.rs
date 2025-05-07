@@ -1,7 +1,7 @@
 use std::collections::{hash_map, HashMap};
 
 use futures::{stream::FuturesUnordered, StreamExt};
-use moq_log::{events::{AnnounceStatus, Event}, writer::QlogWriter};
+use qlog_rs::{events::Event, moq_transfork::data::AnnounceStatus, writer::QlogWriter};
 
 use crate::{
 	message,
@@ -93,7 +93,7 @@ impl Publisher {
 		let prefix = interest.prefix;
 		tracing::debug!(?prefix, "announce interest");
 
-		QlogWriter::log_event(Event::announce_please_parsed(prefix.to_vec(), tracing_id));
+		QlogWriter::log_event(Event::moq_announce_please_parsed(prefix.to_vec(), tracing_id));
 
 		let mut announced = self.announced.subscribe_prefix(prefix.clone());
 
@@ -104,7 +104,7 @@ impl Publisher {
 					tracing::debug!(?prefix, ?suffix, "announce");
 
 					// TODO: Check if this is right
-					QlogWriter::log_event(Event::announce_created(AnnounceStatus::Active, vec![suffix.to_vec()], tracing_id));
+					QlogWriter::log_event(Event::moq_announce_created(AnnounceStatus::Active, vec![suffix.to_vec()], tracing_id));
 
 					stream.writer.encode(&message::Announce::Active { suffix }).await?;
 				}
@@ -112,7 +112,7 @@ impl Publisher {
 					tracing::debug!(?prefix, ?suffix, "unannounce");
 
 					// TODO: Check if this is right
-					QlogWriter::log_event(Event::announce_created(AnnounceStatus::Ended, vec![suffix.to_vec()], tracing_id));
+					QlogWriter::log_event(Event::moq_announce_created(AnnounceStatus::Ended, vec![suffix.to_vec()], tracing_id));
 
 					stream.writer.encode(&message::Announce::Ended { suffix }).await?;
 				}
@@ -121,7 +121,7 @@ impl Publisher {
 					tracing::debug!(?prefix, "live");
 
 					// TODO: Check if this is right
-					QlogWriter::log_event(Event::announce_created(AnnounceStatus::Live, vec![], tracing_id));
+					QlogWriter::log_event(Event::moq_announce_created(AnnounceStatus::Live, vec![], tracing_id));
 
 					stream.writer.encode(&message::Announce::Live).await?;
 				}
@@ -136,7 +136,7 @@ impl Publisher {
 	pub async fn recv_subscribe(&mut self, stream: &mut Stream, tracing_id: u64) -> Result<(), Error> {
 		let subscribe: message::Subscribe = stream.reader.decode().await?;
 
-		QlogWriter::log_event(Event::subscription_started_parsed(subscribe.id, subscribe.path.to_vec(), subscribe.priority.try_into().unwrap(), subscribe.group_order as u64, subscribe.group_min, subscribe.group_max, tracing_id));
+		QlogWriter::log_event(Event::moq_subscription_started_parsed(subscribe.id, subscribe.path.to_vec(), subscribe.priority.try_into().unwrap(), subscribe.group_order as u64, subscribe.group_min, subscribe.group_max, tracing_id));
 
 		self.serve_subscribe(stream, subscribe, tracing_id).await
 	}
@@ -159,7 +159,7 @@ impl Publisher {
 
 		tracing::info!(?info, "active");
 
-		QlogWriter::log_event(Event::info_created(info.track_priority.try_into().unwrap(), info.group_latest, info.group_order as u64, tracing_id));
+		QlogWriter::log_event(Event::moq_info_created(info.track_priority.try_into().unwrap(), info.group_latest, info.group_order as u64, tracing_id));
 
 		stream.writer.encode(&info).await?;
 
@@ -181,7 +181,7 @@ impl Publisher {
 					Some(update) => {
 						// TODO use it
 
-						QlogWriter::log_event(Event::subscription_update_parsed(update.priority, update.group_order as u64, update.group_min, update.group_max, tracing_id));
+						QlogWriter::log_event(Event::moq_subscription_update_parsed(update.priority, update.group_order as u64, update.group_min, update.group_max, tracing_id));
 					},
 					// Subscribe has completed
 					None => {
@@ -239,7 +239,7 @@ impl Publisher {
 			sequence: group.sequence,
 		};
 
-		QlogWriter::log_event(Event::group_created(msg.subscribe, msg.sequence, tracing_id));
+		QlogWriter::log_event(Event::moq_group_created(msg.subscribe, msg.sequence, tracing_id));
 
 		stream.encode(&msg).await?;
 
@@ -249,7 +249,7 @@ impl Publisher {
 			let header = message::Frame { size: frame.size };
 
 			// TODO: Maybe add the payload
-			QlogWriter::log_event(Event::frame_created(Some(frame.size.try_into().unwrap()), None, tracing_id));
+			QlogWriter::log_event(Event::moq_frame_created(Some(frame.size.try_into().unwrap()), None, tracing_id));
 
 			stream.encode(&header).await?;
 
@@ -280,7 +280,7 @@ impl Publisher {
 	pub async fn recv_fetch(&mut self, stream: &mut Stream, tracing_id: u64) -> Result<(), Error> {
 		let fetch: message::Fetch = stream.reader.decode().await?;
 
-		QlogWriter::log_event(Event::fetch_parsed(fetch.path.to_vec(), fetch.priority.try_into().unwrap(), fetch.group, fetch.offset.try_into().unwrap(), tracing_id));
+		QlogWriter::log_event(Event::moq_fetch_parsed(fetch.path.to_vec(), fetch.priority.try_into().unwrap(), fetch.group, fetch.offset.try_into().unwrap(), tracing_id));
 
 		self.serve_fetch(stream, fetch).await
 	}
@@ -302,7 +302,7 @@ impl Publisher {
 	pub async fn recv_info(&mut self, stream: &mut Stream, tracing_id: u64) -> Result<(), Error> {
 		let info: message::InfoRequest = stream.reader.decode().await?;
 
-		QlogWriter::log_event(Event::info_please_parsed(info.path.to_vec(), tracing_id));
+		QlogWriter::log_event(Event::moq_info_please_parsed(info.path.to_vec(), tracing_id));
 
 		self.serve_info(stream, info, tracing_id).await
 	}
@@ -321,7 +321,7 @@ impl Publisher {
 			group_order: track.order,
 		};
 
-		QlogWriter::log_event(Event::info_created(info.track_priority.try_into().unwrap(), info.group_latest, info.group_order as u64, tracing_id));
+		QlogWriter::log_event(Event::moq_info_created(info.track_priority.try_into().unwrap(), info.group_latest, info.group_order as u64, tracing_id));
 
 		stream.writer.encode(&info).await?;
 

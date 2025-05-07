@@ -1,4 +1,4 @@
-use moq_log::{events::Event, writer::QlogWriter};
+use qlog_rs::{events::Event, writer::QlogWriter};
 
 use super::{Close, Reader, Writer};
 use crate::{message, Error};
@@ -12,7 +12,7 @@ impl Stream {
 	pub async fn open(session: &mut web_transport::Session, typ: message::ControlType, tracing_id: u64) -> Result<Self, Error> {
 		let (send, recv) = session.open_bi().await?;
 
-		QlogWriter::log_event(Event::stream_created(typ.to_log_type(), tracing_id));
+		QlogWriter::log_event(Event::moq_stream_created(typ.to_log_type(), tracing_id));
 
 		let mut writer = Writer::new(send);
 		let reader = Reader::new(recv);

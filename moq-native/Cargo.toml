@@ -18,7 +18,7 @@ web-transport = { workspace = true }
 rustls = "0.23"
 rustls-pemfile = "2"
 rustls-native-certs = "0.8"
-quinn = "0.11"
+quinn = { path = "../../quinn-fork/quinn", version = "0.11" }
 ring = "0.17"
 webpki = "0.22"
 rcgen = "0.13"

@@ -14,7 +14,7 @@ categories = ["multimedia", "network-programming", "web-programming"]
 [dependencies]
 moq-transfork = { path = "../moq-transfork", version = "0.10" }
 moq-native = { path = "../moq-native", version = "0.6" }
-moq-log = { path = "../moq-log", version = "0.1" }
+qlog-rs = { path = "../../qlog-rs", version = "0.4" }
 web-transport = { workspace = true }
 
 # QUIC

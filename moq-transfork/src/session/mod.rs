@@ -1,7 +1,7 @@
 use crate::{coding::VarInt, message, AnnouncedConsumer, Error, Path, RouterConsumer, Track, TrackConsumer};
 
 use moq_async::{spawn, Close, OrClose};
-use moq_log::{events::Event, writer::QlogWriter};
+use qlog_rs::{events::Event, writer::QlogWriter};
 
 mod publisher;
 mod reader;
@@ -72,12 +72,12 @@ impl Session {
 		};
 
 		let versions: Vec<u64> = client.versions.iter().map(|&v| v.into()).collect();
-		QlogWriter::log_event(Event::session_started_client_created(versions, Some(client.extensions.keys()), client.tracing_id));
+		QlogWriter::log_event(Event::moq_session_started_client_created(versions, Some(client.extensions.keys()), client.tracing_id));
 
 		setup.writer.encode(&client).await?;
 		let server: message::ServerSetup = setup.reader.decode().await?;
 
-		QlogWriter::log_event(Event::session_started_server_parsed(server.version.into(), Some(server.extensions.keys()), client.tracing_id));
+		QlogWriter::log_event(Event::moq_session_started_server_parsed(server.version.into(), Some(server.extensions.keys()), client.tracing_id));
 
 		tracing::info!(version = ?server.version, "connected");
 
@@ -91,7 +91,7 @@ impl Session {
 		let kind: message::ControlType = stream.reader.decode().await?;
 
 		// TODO: Think about what to do with the tracing ID here
-		QlogWriter::log_event(Event::stream_parsed(kind.to_log_type(), 0));
+		QlogWriter::log_event(Event::moq_stream_parsed(kind.to_log_type(), 0));
 
 		if kind != message::ControlType::Session {
 			return Err(Error::UnexpectedStream(kind));
@@ -105,7 +105,7 @@ impl Session {
 		let client: message::ClientSetup = control.reader.decode().await?;
 
 		let versions: Vec<u64> = client.versions.iter().map(|&v| v.into()).collect();
-		QlogWriter::log_event(Event::session_started_client_parsed(versions, Some(client.extensions.keys()), client.tracing_id));
+		QlogWriter::log_event(Event::moq_session_started_client_parsed(versions, Some(client.extensions.keys()), client.tracing_id));
 
 		if !client.versions.contains(&message::Version::CURRENT) {
 			return Err(Error::Version(client.versions, [message::Version::CURRENT].into()));
@@ -116,7 +116,7 @@ impl Session {
 			extensions: Default::default(),
 		};
 
-		QlogWriter::log_event(Event::session_started_server_created(server.version.into(), Some(server.extensions.keys()), client.tracing_id));
+		QlogWriter::log_event(Event::moq_session_started_server_created(server.version.into(), Some(server.extensions.keys()), client.tracing_id));
 
 		control.writer.encode(&server).await?;
 
@@ -127,7 +127,7 @@ impl Session {
 
 	async fn run_session(mut stream: Stream, tracing_id: u64) -> Result<(), Error> {
 		while let Some(info) = stream.reader.decode_maybe::<message::Info>().await? {
-			QlogWriter::log_event(Event::info_parsed(info.track_priority.try_into().unwrap(), info.group_latest, info.group_order as u64, tracing_id));
+			QlogWriter::log_event(Event::moq_info_parsed(info.track_priority.try_into().unwrap(), info.group_latest, info.group_order as u64, tracing_id));
 		}
 		Err(Error::Cancel)
 	}
@@ -146,7 +146,7 @@ impl Session {
 	async fn run_data(stream: &mut Reader, mut subscriber: Subscriber, tracing_id: u64) -> Result<(), Error> {
 		let kind: message::DataType = stream.decode().await?;
 
-		QlogWriter::log_event(Event::stream_parsed(kind.to_log_type(), tracing_id));
+		QlogWriter::log_event(Event::moq_stream_parsed(kind.to_log_type(), tracing_id));
 
 		match kind {
 			message::DataType::Group => subscriber.recv_group(stream, tracing_id).await,
@@ -170,7 +170,7 @@ impl Session {
 	async fn run_control(stream: &mut Stream, mut publisher: Publisher, tracing_id: u64) -> Result<(), Error> {
 		let kind: message::ControlType = stream.reader.decode().await?;
 
-		QlogWriter::log_event(Event::stream_parsed(kind.to_log_type(), tracing_id));
+		QlogWriter::log_event(Event::moq_stream_parsed(kind.to_log_type(), tracing_id));
 
 		match kind {
 			message::ControlType::Session => Err(Error::UnexpectedStream(kind)),

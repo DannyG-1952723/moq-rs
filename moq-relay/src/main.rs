@@ -5,7 +5,7 @@ mod web;
 
 pub use cluster::*;
 pub use connection::*;
-use moq_log::{logfile::{VantagePoint, VantagePointType}, writer::QlogWriter};
+use qlog_rs::{logfile::{VantagePoint, VantagePointType}, writer::QlogWriter};
 pub use origins::*;
 pub use web::*;
 
