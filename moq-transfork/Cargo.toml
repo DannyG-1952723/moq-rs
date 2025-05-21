@@ -30,4 +30,4 @@ futures = "0.3"
 num_enum = "0.7"
 
 moq-async = { path = "../moq-async", version = "0.1" }
-qlog-rs = { path = "../../qlog-rs", version = "0.4", features = ["moq-transfork"]}
+qlog-rs = { path = "../../qlog-rs", version = "0.5", features = ["moq-transfork"]}
