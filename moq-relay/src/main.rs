@@ -3,6 +3,8 @@ mod connection;
 mod origins;
 mod web;
 
+use std::collections::HashMap;
+
 pub use cluster::*;
 pub use connection::*;
 use qlog_rs::{logfile::{VantagePoint, VantagePointType}, writer::QlogWriter};
@@ -41,12 +43,16 @@ async fn main() -> anyhow::Result<()> {
 	let config = Config::parse();
 	config.log.init();
 
+	let mut custom_fields: HashMap<String, String> = HashMap::new();
+	custom_fields.insert("main_role".to_string(), "relay".to_string());
+
 	QlogWriter::log_file_details(
 		Some("MoQ Relay Logs".to_string()),
 		Some("All logs produced by the MoQ relay".to_string()),
 		None,
 		None,
-		Some(VantagePoint::new(Some("relay".to_string()), VantagePointType::Server, None))
+		Some(VantagePoint::new(Some("relay".to_string()), VantagePointType::Server, None)),
+		Some(custom_fields)
 	);
 
 	let bind = tokio::net::lookup_host(config.bind)

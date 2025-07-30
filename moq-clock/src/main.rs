@@ -1,6 +1,6 @@
 use qlog_rs::{writer::QlogWriter, logfile::{VantagePoint, VantagePointType}};
 use moq_native::quic;
-use std::net;
+use std::{collections::HashMap, net};
 use url::Url;
 
 use anyhow::Context;
@@ -47,21 +47,33 @@ async fn main() -> anyhow::Result<()> {
 	let config = Config::parse();
 	config.log.init();
 
+	let mut custom_fields: HashMap<String, String> = HashMap::new();
+
 	match config.role {
-		Command::Publish => QlogWriter::log_file_details(
-			Some("MoQ Clock Logs".to_string()),
-			None,
-			Some("Publisher".to_string()),
-			Some("Logs taken from the perspective of the publisher".to_string()),
-			Some(VantagePoint::new(Some("clock-pub".to_string()), VantagePointType::Client, None))
-		),
-		Command::Subscribe => QlogWriter::log_file_details(
-			Some("MoQ Clock Logs".to_string()),
-			None,
-			Some("Subscriber".to_string()),
-			Some("Logs taken from the perspective of the subscriber".to_string()),
-			Some(VantagePoint::new(Some("clock-sub".to_string()), VantagePointType::Client, None))
-		)
+		Command::Publish => {
+			custom_fields.insert("main_role".to_string(), "publisher".to_string());
+
+			QlogWriter::log_file_details(
+				Some("MoQ Clock Logs".to_string()),
+				None,
+				Some("Publisher".to_string()),
+				Some("Logs taken from the perspective of the publisher".to_string()),
+				Some(VantagePoint::new(Some("clock-pub".to_string()), VantagePointType::Client, None)),
+				Some(custom_fields)
+			)
+		},
+		Command::Subscribe => {
+			custom_fields.insert("main_role".to_string(), "subscriber".to_string());
+
+			QlogWriter::log_file_details(
+				Some("MoQ Clock Logs".to_string()),
+				None,
+				Some("Subscriber".to_string()),
+				Some("Logs taken from the perspective of the subscriber".to_string()),
+				Some(VantagePoint::new(Some("clock-sub".to_string()), VantagePointType::Client, None)),
+				Some(custom_fields)
+			)
+		}
 	}
 
 	let tls = config.tls.load()?;
