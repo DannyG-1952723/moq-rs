@@ -2,6 +2,7 @@ use std::collections::{hash_map::Entry, HashMap};
 
 use baton::Baton;
 use moq_karp::moq_transfork::{Announced, AnnouncedConsumer, AnnouncedProducer, Path};
+use qlog_rs::{logfile::{VantagePoint, VantagePointType}, writer::QlogWriter};
 use url::Url;
 use wasm_bindgen_futures::spawn_local;
 
@@ -44,6 +45,20 @@ impl Backend {
 	}
 
 	pub fn start(mut self) {
+		let mut custom_fields: HashMap<String, String> = HashMap::new();
+		custom_fields.insert("main_role".to_string(), "subscriber".to_string());
+
+		tracing::info!("Before logging file details");
+
+		QlogWriter::log_file_details(
+			Some("MoQ Web".to_string()),
+			None,
+			None,
+			None,
+			Some(VantagePoint::new(Some("moq-web".to_string()), VantagePointType::Client, None)),
+			Some(custom_fields)
+		);
+
 		spawn_local(async move {
 			if let Err(err) = self.run().await {
 				self.status.error.set(Some(err));

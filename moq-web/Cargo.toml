@@ -32,6 +32,8 @@ thiserror = "2"
 hex = "0.4"
 baton = "0.2.1"
 
+qlog-rs = { path = "../../qlog-rs", version = "0.5" }
+
 [dependencies.web-sys]
 version = "0.3.77"
 features = [

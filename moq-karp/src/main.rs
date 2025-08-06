@@ -1,8 +1,9 @@
-use std::net;
+use std::{collections::HashMap, net};
 
 use anyhow::Context;
 use clap::{Parser, Subcommand};
 use moq_transfork::{Path, Session};
+use qlog_rs::{logfile::{VantagePoint, VantagePointType}, writer::QlogWriter};
 use url::Url;
 
 use moq_karp::{cmaf, BroadcastProducer};
@@ -70,6 +71,18 @@ async fn connect(config: &Config, url: &str) -> anyhow::Result<(Session, Path)> 
 
 #[tracing::instrument(skip_all, fields(?url))]
 async fn publish(config: Config, url: String) -> anyhow::Result<()> {
+	let mut custom_fields: HashMap<String, String> = HashMap::new();
+	custom_fields.insert("main_role".to_string(), "publisher".to_string());
+
+	QlogWriter::log_file_details(
+		Some("MoQ Karp".to_string()),
+		None,
+		None,
+		None,
+		Some(VantagePoint::new(Some("moq-karp".to_string()), VantagePointType::Client, None)),
+		Some(custom_fields)
+	);
+
 	let (session, path) = connect(&config, &url).await?;
 	let broadcast = BroadcastProducer::new(session.clone(), path)?;
 	let mut input = tokio::io::stdin();

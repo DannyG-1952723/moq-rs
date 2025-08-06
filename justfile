@@ -33,11 +33,11 @@ all:
 
 # Run a localhost relay server
 relay:
-	QLOGFILE="../logs/relay_loss.sqlog" cargo run --bin moq-relay -- --bind "[::]:4443" --tls-self-sign "localhost:4443" --cluster-node "localhost:4443" --tls-disable-verify --dev
+	QLOGFILE="../logs/relay.sqlog" cargo run --bin moq-relay -- --bind "[::]:4443" --tls-self-sign "localhost:4443" --cluster-node "localhost:4443" --tls-disable-verify --dev
 
 # Run a localhost leaf server, connecting to the relay server
 leaf:
-	cargo run --bin moq-relay -- --bind "[::]:4444" --tls-self-sign "localhost:4444" --cluster-node "localhost:4444" --cluster-root "localhost:4443" --tls-disable-verify --dev
+	QLOGFILE="../logs/leaf.sqlog" cargo run --bin moq-relay -- --bind "[::]:4444" --tls-self-sign "localhost:4444" --cluster-node "localhost:4444" --cluster-root "localhost:4443" --tls-disable-verify --dev
 
 # Run a cluster of relay servers
 cluster:
@@ -73,19 +73,20 @@ pub name:
 		-i "dev/{{name}}.fmp4" \
 		-c copy \
 		-f mp4 -movflags cmaf+separate_moof+delay_moov+skip_trailer+frag_every_frame \
-		- | cargo run --bin moq-karp -- publish "http://localhost:4443/demo/{{name}}"
+		- | QLOGFILE="../logs/{{name}}_pub.sqlog" cargo run --bin moq-karp -- publish "http://localhost:4443/demo/{{name}}"
 
 # Run the web server
 web:
+	wasm-pack build moq-web --out-dir ../dist --out-name rust --target bundler --dev
 	npm i && npm run dev
 
 # Publish the clock broadcast
 clock-pub:
-	QLOGFILE="../logs/clock_pub_loss.sqlog" cargo run --bin moq-clock -- "http://localhost:4443" publish
+	QLOGFILE="../logs/clock_pub.sqlog" cargo run --bin moq-clock -- "http://localhost:4443" publish
 
 # Subscribe to the clock broadcast
 clock-sub:
-	QLOGFILE="../logs/clock_sub_loss.sqlog" cargo run --bin moq-clock -- "http://localhost:4443" subscribe
+	QLOGFILE="../logs/clock_sub.sqlog" cargo run --bin moq-clock -- "http://localhost:4444" subscribe
 
 # Run the CI checks
 check:

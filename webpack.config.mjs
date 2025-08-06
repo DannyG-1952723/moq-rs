@@ -16,12 +16,12 @@ const config = {
 		filename: "index.js",
 	},
 	plugins: [
-		new WasmPackPlugin({
-			crateDirectory: path.resolve(__dirname, "moq-web"),
-			outDir: path.resolve(__dirname, "dist"),
-			args: "--log-level warn",
-			outName: "rust",
-		}),
+		// new WasmPackPlugin({
+		// 	crateDirectory: path.resolve(__dirname, "moq-web"),
+		// 	outDir: path.resolve(__dirname, "dist"),
+		// 	args: "--log-level warn",
+		// 	outName: "rust",
+		// }),
 		new HtmlWebpackPlugin({
 			template: "moq-web/src/demo/index.html",
 		}),

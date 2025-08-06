@@ -68,7 +68,7 @@ impl Session {
 		let client = message::ClientSetup {
 			versions: [message::Version::CURRENT].into(),
 			extensions: Default::default(),
-			tracing_id: rand::random_range(0..=VarInt::MAX.into())
+			tracing_id: Session::get_random_tracing_id()
 		};
 
 		let versions: Vec<u64> = client.versions.iter().map(|&v| v.into()).collect();
@@ -216,6 +216,16 @@ impl Session {
 	/// Block until the WebTransport session is closed.
 	pub async fn closed(&self) -> Error {
 		self.webtransport.closed().await.into()
+	}
+
+	#[cfg(not(target_arch = "wasm32"))]
+	fn get_random_tracing_id() -> u64 {
+		rand::random_range(0..=VarInt::MAX.into())
+	}
+
+	#[cfg(target_arch = "wasm32")]
+	fn get_random_tracing_id() -> u64 {
+		fastrand::u64(0..=VarInt::MAX.into())
 	}
 }
 
